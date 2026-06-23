@@ -39,6 +39,17 @@ export async function dismissFact(factId: string) {
   revalidatePath("/onboarding/summary");
 }
 
+export async function confirmAllFacts() {
+  const founder = await getCurrentFounder();
+  const db = createServiceClient();
+  await db
+    .from("brain_facts")
+    .update({ status: "active" })
+    .eq("founder_id", founder.id)
+    .neq("status", "rejected");
+  revalidatePath("/onboarding/summary");
+}
+
 export async function advanceToPaywall() {
   const founder = await getCurrentFounder();
   const db = createServiceClient();

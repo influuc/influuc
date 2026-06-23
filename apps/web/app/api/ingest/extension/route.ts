@@ -1,5 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/service";
-import { verifyExtensionToken } from "@/lib/extension-token";
+import { createClient as createAnonClient } from "@supabase/supabase-js";
 import type { Json } from "@influuc/db";
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
@@ -10,19 +10,51 @@ import type { brainBootstrap } from "@/trigger/brain-bootstrap";
 /**
  * POST /api/ingest/extension
  *
- * Receives scraped profile payload from the Influuc Chrome extension.
- * Authenticated via a short-lived extension token (not the Supabase session,
- * since the extension background worker runs in a separate context).
- *
- * Body: { platform: "x" | "linkedin", profileUrl: string, data: Record<string, unknown> }
+ * Receives scraped profile data from the Influuc Chrome extension.
+ * Auth: Supabase access_token passed as Bearer — the same session the
+ * user has in their browser. No separate extension token needed.
  */
 export async function POST(request: NextRequest) {
   const auth = request.headers.get("authorization") ?? "";
   const token = auth.startsWith("Bearer ") ? auth.slice(7) : "";
-  const verified = verifyExtensionToken(token);
-  if (!verified) {
+
+  if (!token) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+
+  // Verify the JWT and get the Supabase user
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
+  const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!;
+  const anonClient = createAnonClient(supabaseUrl, supabaseAnonKey);
+  const { data: { user }, error: authError } = await anonClient.auth.getUser(token);
+
+  if (authError || !user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  // Look up founder via accounts table
+  const db = createServiceClient();
+  const { data: account } = await db
+    .from("accounts")
+    .select("id")
+    .eq("auth_user_id", user.id)
+    .single();
+
+  if (!account) {
+    return NextResponse.json({ error: "Account not found" }, { status: 401 });
+  }
+
+  const { data: founder } = await db
+    .from("founders")
+    .select("id, onboarding_state")
+    .eq("account_id", (account as { id: string }).id)
+    .single();
+
+  if (!founder) {
+    return NextResponse.json({ error: "Founder not found" }, { status: 401 });
+  }
+
+  const founderId = (founder as { id: string; onboarding_state: string }).id;
 
   let body: { platform: string; profileUrl: string; data: Record<string, unknown> };
   try {
@@ -38,15 +70,9 @@ export async function POST(request: NextRequest) {
   if (!["x", "linkedin"].includes(platform)) {
     return NextResponse.json({ error: "platform must be x or linkedin" }, { status: 400 });
   }
-  if (profileUrl.length > 500) {
-    return NextResponse.json({ error: "profileUrl too long" }, { status: 400 });
-  }
-
-  const db = createServiceClient();
-  const founderId = verified.founderId;
 
   const contentHash = createHash("sha256")
-    .update(JSON.stringify(data))
+    .update(JSON.stringify(data).slice(0, 10_000))
     .digest("hex");
 
   const { data: rawSource, error: rsError } = await db
@@ -81,12 +107,12 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: "Failed to queue job" }, { status: 500 });
   }
 
-  // Advance onboarding state from extension → capture if still at extension step
+  // Advance onboarding state to analysis
   await db
     .from("founders")
-    .update({ onboarding_state: "capture" })
+    .update({ onboarding_state: "analysis" })
     .eq("id", founderId)
-    .eq("onboarding_state", "extension");
+    .in("onboarding_state", ["capture", "extension"]);
 
   try {
     const handle = await tasks.trigger<typeof brainBootstrap>("brain.bootstrap", {

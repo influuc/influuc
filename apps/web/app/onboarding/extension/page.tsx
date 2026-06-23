@@ -15,18 +15,16 @@ export default async function ExtensionPage() {
   }
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "3rem 1.5rem",
-        gap: "2rem",
-        textAlign: "center",
-      }}
-    >
+    <div style={{
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "3rem 1.5rem",
+      gap: "2rem",
+      textAlign: "center",
+    }}>
       <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center" }}>
         <span style={{ fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent)", fontWeight: 700 }}>
           Step 2 of 5
@@ -35,20 +33,16 @@ export default async function ExtensionPage() {
           Install the Influuc extension
         </h1>
         <p style={{ color: "var(--muted)", maxWidth: "44ch", lineHeight: 1.65 }}>
-          The extension reads your existing X posts and LinkedIn profile using your
-          own logged-in session — no password, no background collection. You preview
-          everything before it&apos;s sent.
+          The extension reads your X posts and LinkedIn activity using your own
+          logged-in session — no passwords, no background collection, no setup.
         </p>
       </div>
 
-      {/* Steps */}
       <div style={{ width: "100%", maxWidth: "380px", display: "flex", flexDirection: "column", gap: "0.75rem" }}>
         <Step n={1} label="Load the extension in Chrome" detail='Go to chrome://extensions → enable "Developer mode" → "Load unpacked" → select apps/extension/build/chrome-mv3-dev' />
-        <Step n={2} label="Click the Influuc icon in your toolbar" detail="Then click Connect Influuc — it will open a quick auth page and link your account." />
-        <Step n={3} label="Visit your X or LinkedIn profile" detail="The popup will show an Import button. Click it and we'll read your posts." />
+        <Step n={2} label="Come back here and continue" detail="That's it. No login needed inside the extension — it uses your existing Influuc session automatically." />
       </div>
 
-      {/* Dev note */}
       <div style={{
         width: "100%",
         maxWidth: "380px",
@@ -61,34 +55,26 @@ export default async function ExtensionPage() {
         lineHeight: 1.6,
         textAlign: "left",
       }}>
-        <strong style={{ color: "var(--fg)" }}>During development</strong> the extension runs unpacked from your local machine.
-        Run <code style={{ background: "rgba(255,255,255,0.07)", padding: "0 4px", borderRadius: 3 }}>pnpm dev</code> inside <code style={{ background: "rgba(255,255,255,0.07)", padding: "0 4px", borderRadius: 3 }}>apps/extension</code> to build it,
+        <strong style={{ color: "var(--foreground)" }}>During development</strong> — run{" "}
+        <code style={{ background: "rgba(255,255,255,0.07)", padding: "0 4px", borderRadius: 3 }}>pnpm dev</code> inside{" "}
+        <code style={{ background: "rgba(255,255,255,0.07)", padding: "0 4px", borderRadius: 3 }}>apps/extension</code>,
         then load the <code style={{ background: "rgba(255,255,255,0.07)", padding: "0 4px", borderRadius: 3 }}>build/chrome-mv3-dev</code> folder.
       </div>
 
-      {/* Continue */}
-      <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.75rem" }}>
-        <Link
-          href="/onboarding/capture"
-          style={{
-            padding: "0.75rem 2rem",
-            borderRadius: "0.5rem",
-            background: "var(--accent)",
-            color: "#fff",
-            fontWeight: 600,
-            fontSize: "0.95rem",
-            textDecoration: "none",
-          }}
-        >
-          I&apos;ve installed it — continue →
-        </Link>
-        <Link
-          href="/onboarding/capture"
-          style={{ fontSize: "0.82rem", color: "var(--muted)", textDecoration: "underline", textUnderlineOffset: "3px" }}
-        >
-          Skip for now (use X API + website only)
-        </Link>
-      </div>
+      <Link
+        href="/onboarding/capture"
+        style={{
+          padding: "0.75rem 2rem",
+          borderRadius: "0.5rem",
+          background: "var(--accent)",
+          color: "#fff",
+          fontWeight: 600,
+          fontSize: "0.95rem",
+          textDecoration: "none",
+        }}
+      >
+        I&apos;ve installed it — continue →
+      </Link>
     </div>
   );
 }
