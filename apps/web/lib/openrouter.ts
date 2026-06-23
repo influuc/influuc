@@ -1,3 +1,5 @@
+import { logger } from "@trigger.dev/sdk/v3";
+
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
 const EXTRACTION_MODEL = "anthropic/claude-haiku-4-5";
 
@@ -115,13 +117,29 @@ export async function extractBrainFacts(
 
   const data = (await response.json()) as {
     choices: Array<{ message: { content: string } }>;
+    error?: { message: string };
   };
-  const rawContent = data.choices[0]?.message?.content ?? "{}";
+
+  if (data.error) {
+    throw new Error(`OpenRouter API error: ${data.error.message}`);
+  }
+
+  const rawContent = data.choices?.[0]?.message?.content ?? "";
+  logger.info("OpenRouter raw response", {
+    model: EXTRACTION_MODEL,
+    contentLength: rawContent.length,
+    contentPreview: rawContent.slice(0, 300),
+  });
+
+  if (!rawContent) return emptyBrain();
 
   // Extract the JSON object from the response — handles raw JSON, code-fenced
   // JSON, and models that prepend explanation text before the code block.
   const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) return emptyBrain();
+  if (!jsonMatch) {
+    logger.warn("No JSON object found in OpenRouter response", { rawContent: rawContent.slice(0, 500) });
+    return emptyBrain();
+  }
 
   try {
     const parsed = JSON.parse(jsonMatch[0]) as Partial<Record<BrainLayer, unknown>>;
