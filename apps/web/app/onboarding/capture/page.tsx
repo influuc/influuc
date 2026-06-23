@@ -59,7 +59,7 @@ export default async function CapturePage() {
           Import your content
         </h1>
         <p style={{ color: "var(--muted)", maxWidth: "44ch", lineHeight: 1.65 }}>
-          We'll scan your X posts, LinkedIn activity, and website in the background.
+          We&apos;ll scan your X posts, LinkedIn activity, and website in the background.
           Just click scan — tabs open and close automatically.
         </p>
       </div>
