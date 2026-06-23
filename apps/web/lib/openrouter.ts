@@ -73,7 +73,8 @@ Rules:
 - content: 1-3 specific sentences per fact, grounded in what you actually read
 - key: snake_case identifier (e.g., "primary_offer", "target_market", "core_belief_1")
 - Return empty array [] for layers with no evidence in the content
-- Do NOT fabricate or hallucinate — only extract what is supported by the text`;
+- Do NOT fabricate or hallucinate — only extract what is supported by the text
+- Limit to 3 facts per layer maximum`;
 }
 
 function emptyBrain(): ExtractedBrain {
@@ -81,6 +82,37 @@ function emptyBrain(): ExtractedBrain {
     (acc, layer) => ({ ...acc, [layer]: [] }),
     {} as ExtractedBrain
   );
+}
+
+/**
+ * Extract the first balanced JSON object from an arbitrary string.
+ * Handles responses where the model wraps JSON in code fences or appends
+ * explanation text (which may contain } characters) after the JSON block.
+ */
+function extractFirstJsonObject(text: string): string | null {
+  const start = text.indexOf("{");
+  if (start === -1) return null;
+
+  let depth = 0;
+  let inString = false;
+  let escaped = false;
+
+  for (let i = start; i < text.length; i++) {
+    const ch = text[i];
+
+    if (escaped) { escaped = false; continue; }
+    if (ch === "\\" && inString) { escaped = true; continue; }
+    if (ch === '"') { inString = !inString; continue; }
+    if (inString) continue;
+
+    if (ch === "{") depth++;
+    else if (ch === "}") {
+      depth--;
+      if (depth === 0) return text.slice(start, i + 1);
+    }
+  }
+
+  return null;
 }
 
 export async function extractBrainFacts(
@@ -105,9 +137,9 @@ export async function extractBrainFacts(
       model: EXTRACTION_MODEL,
       messages: [{ role: "user", content: prompt }],
       response_format: { type: "json_object" },
-      max_tokens: 2000,
+      max_tokens: 4000,
     }),
-    signal: AbortSignal.timeout(60_000),
+    signal: AbortSignal.timeout(90_000),
   });
 
   if (!response.ok) {
@@ -125,24 +157,23 @@ export async function extractBrainFacts(
   }
 
   const rawContent = data.choices?.[0]?.message?.content ?? "";
+
   logger.info("OpenRouter raw response", {
-    model: EXTRACTION_MODEL,
-    contentLength: rawContent.length,
-    contentPreview: rawContent.slice(0, 300),
+    rawLength: rawContent.length,
+    rawPreview: rawContent.slice(0, 400),
   });
+  console.log("[openrouter] rawContent length:", rawContent.length, "preview:", rawContent.slice(0, 200));
 
   if (!rawContent) return emptyBrain();
 
-  // Extract the JSON object from the response — handles raw JSON, code-fenced
-  // JSON, and models that prepend explanation text before the code block.
-  const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
-  if (!jsonMatch) {
-    logger.warn("No JSON object found in OpenRouter response", { rawContent: rawContent.slice(0, 500) });
+  const jsonStr = extractFirstJsonObject(rawContent);
+  if (!jsonStr) {
+    console.log("[openrouter] no JSON object found in response");
     return emptyBrain();
   }
 
   try {
-    const parsed = JSON.parse(jsonMatch[0]) as Partial<Record<BrainLayer, unknown>>;
+    const parsed = JSON.parse(jsonStr) as Partial<Record<BrainLayer, unknown>>;
     const result = emptyBrain();
     for (const layer of BRAIN_LAYERS) {
       const facts = parsed[layer];
@@ -156,8 +187,10 @@ export async function extractBrainFacts(
         );
       }
     }
+    console.log("[openrouter] extracted fact counts:", Object.fromEntries(Object.entries(result).map(([k, v]) => [k, v.length])));
     return result;
-  } catch {
+  } catch (err) {
+    console.log("[openrouter] JSON parse error:", String(err), "jsonStr[:200]:", jsonStr.slice(0, 200));
     return emptyBrain();
   }
 }
