@@ -549,6 +549,7 @@ export type Database = {
           display_name: string | null
           headline: string | null
           id: string
+          next_generation_at: string | null
           onboarding_state: string
           primary_locale: string | null
           timezone: string | null
@@ -560,6 +561,7 @@ export type Database = {
           display_name?: string | null
           headline?: string | null
           id?: string
+          next_generation_at?: string | null
           onboarding_state?: string
           primary_locale?: string | null
           timezone?: string | null
@@ -571,6 +573,7 @@ export type Database = {
           display_name?: string | null
           headline?: string | null
           id?: string
+          next_generation_at?: string | null
           onboarding_state?: string
           primary_locale?: string | null
           timezone?: string | null

@@ -38,21 +38,18 @@ export async function savePreferences(formData: FormData) {
     { onConflict: "founder_id" }
   );
 
+  // Rolling 7-day: next generation is exactly 7 days from now
+  const now = new Date();
+  const nextGenerationAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
+  const weekStart = now.toISOString().split("T")[0]!;
+
   await db
     .from("founders")
-    .update({ onboarding_state: "done" })
+    .update({ onboarding_state: "done", next_generation_at: nextGenerationAt })
     .eq("id", founder.id)
     .in("onboarding_state", ["preferences", "trial", "paywall"]);
 
   // Fire-and-forget: kick off first week's content generation
-  const now = new Date();
-  const day = now.getUTCDay();
-  const diff = now.getUTCDate() - day + (day === 0 ? -6 : 1);
-  const monday = new Date(now);
-  monday.setUTCDate(diff);
-  monday.setUTCHours(0, 0, 0, 0);
-  const weekStart = monday.toISOString().split("T")[0]!;
-
   try {
     await tasks.trigger<typeof contentGenerate>("content.generate", {
       founderId: founder.id,
