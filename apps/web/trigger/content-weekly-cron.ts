@@ -1,7 +1,6 @@
-import { schedules, logger, tasks } from "@trigger.dev/sdk/v3";
+import { schedules, logger } from "@trigger.dev/sdk/v3";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@influuc/db";
-import type { contentGenerate } from "./content-generate";
 
 if (typeof globalThis.WebSocket === "undefined") {
   // @ts-ignore
@@ -13,10 +12,8 @@ if (typeof globalThis.WebSocket === "undefined") {
 
 export const contentWeeklyCron = schedules.task({
   id: "content.weekly-cron",
-  // Run every hour — rolling 7-day refresh means each user's day is different,
-  // so we check hourly rather than once at midnight
   cron: "0 * * * *",
-  maxDuration: 120,
+  maxDuration: 60,
 
   run: async () => {
     const db = createClient<Database>(
@@ -25,51 +22,44 @@ export const contentWeeklyCron = schedules.task({
       { auth: { autoRefreshToken: false, persistSession: false } }
     );
 
-    const now = new Date();
-    const nowIso = now.toISOString();
+    const nowIso = new Date().toISOString();
 
     const { data: founders, error } = await db
       .from("founders")
       .select("id, next_generation_at")
       .eq("onboarding_state", "done")
+      .eq("reflection_pending", false)
       .not("next_generation_at", "is", null)
       .lte("next_generation_at", nowIso);
 
     if (error) throw new Error(`Weekly cron query failed: ${error.message}`);
     if (!founders?.length) {
       logger.info("content.weekly-cron: no founders due");
-      return { triggered: 0 };
+      return { flagged: 0 };
     }
 
-    let triggered = 0;
+    let flagged = 0;
 
     for (const founder of founders) {
-      const weekStart = now.toISOString().split("T")[0]!;
-      const nextGenAt = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString();
-
-      // Advance next_generation_at atomically before triggering to prevent double-run
-      const { data: advanced } = await db
+      // Atomically claim this founder — only succeeds if next_generation_at hasn't changed
+      const { data: claimed } = await db
         .from("founders")
-        .update({ next_generation_at: nextGenAt })
+        .update({ reflection_pending: true })
         .eq("id", founder.id)
-        .eq("next_generation_at", founder.next_generation_at!) // optimistic lock
+        .eq("next_generation_at", founder.next_generation_at!)
+        .eq("reflection_pending", false)
         .select("id");
 
-      if (!advanced?.length) {
-        logger.info("content.weekly-cron: skipping (already advanced)", { founderId: founder.id });
+      if (!claimed?.length) {
+        logger.info("content.weekly-cron: skipping (already claimed)", { founderId: founder.id });
         continue;
       }
 
-      await tasks.trigger<typeof contentGenerate>("content.generate", {
-        founderId: founder.id,
-        weekStart,
-      });
-
-      logger.info("content.weekly-cron: triggered generation", { founderId: founder.id, weekStart });
-      triggered++;
+      logger.info("content.weekly-cron: reflection flagged", { founderId: founder.id });
+      flagged++;
     }
 
-    logger.info("content.weekly-cron: done", { triggered });
-    return { triggered };
+    logger.info("content.weekly-cron: done", { flagged });
+    return { flagged };
   },
 });

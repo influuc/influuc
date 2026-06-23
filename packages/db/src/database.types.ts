@@ -552,6 +552,7 @@ export type Database = {
           next_generation_at: string | null
           onboarding_state: string
           primary_locale: string | null
+          reflection_pending: boolean
           timezone: string | null
           updated_at: string
         }
@@ -564,6 +565,7 @@ export type Database = {
           next_generation_at?: string | null
           onboarding_state?: string
           primary_locale?: string | null
+          reflection_pending?: boolean
           timezone?: string | null
           updated_at?: string
         }
@@ -576,6 +578,7 @@ export type Database = {
           next_generation_at?: string | null
           onboarding_state?: string
           primary_locale?: string | null
+          reflection_pending?: boolean
           timezone?: string | null
           updated_at?: string
         }
@@ -1304,83 +1307,51 @@ export type Database = {
           },
         ]
       }
-      weekly_strategies: {
-        Row: {
-          id: string
-          founder_id: string
-          week_start: string
-          strategy: Json
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          founder_id: string
-          week_start: string
-          strategy?: Json
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          founder_id?: string
-          week_start?: string
-          strategy?: Json
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "weekly_strategies_founder_id_fkey"
-            columns: ["founder_id"]
-            isOneToOne: false
-            referencedRelation: "founders"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       weekly_posts: {
         Row: {
-          id: string
-          founder_id: string
-          strategy_id: string
-          week_start: string
-          platform: string
-          scheduled_date: string
-          post_type: string
-          sort_order: number
           content: string
-          status: string
-          published_at: string | null
           created_at: string
+          founder_id: string
+          id: string
+          platform: string
+          post_type: string
+          published_at: string | null
+          scheduled_date: string
+          sort_order: number
+          status: string
+          strategy_id: string
           updated_at: string
+          week_start: string
         }
         Insert: {
-          id?: string
-          founder_id: string
-          strategy_id: string
-          week_start: string
-          platform: string
-          scheduled_date: string
-          post_type: string
-          sort_order?: number
           content: string
-          status?: string
-          published_at?: string | null
           created_at?: string
+          founder_id: string
+          id?: string
+          platform: string
+          post_type: string
+          published_at?: string | null
+          scheduled_date: string
+          sort_order?: number
+          status?: string
+          strategy_id: string
           updated_at?: string
+          week_start: string
         }
         Update: {
-          id?: string
-          founder_id?: string
-          strategy_id?: string
-          week_start?: string
-          platform?: string
-          scheduled_date?: string
-          post_type?: string
-          sort_order?: number
           content?: string
-          status?: string
-          published_at?: string | null
           created_at?: string
+          founder_id?: string
+          id?: string
+          platform?: string
+          post_type?: string
+          published_at?: string | null
+          scheduled_date?: string
+          sort_order?: number
+          status?: string
+          strategy_id?: string
           updated_at?: string
+          week_start?: string
         }
         Relationships: [
           {
@@ -1395,6 +1366,70 @@ export type Database = {
             columns: ["strategy_id"]
             isOneToOne: false
             referencedRelation: "weekly_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_reflections: {
+        Row: {
+          created_at: string
+          founder_id: string
+          id: string
+          responses: Json
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          founder_id: string
+          id?: string
+          responses?: Json
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          founder_id?: string
+          id?: string
+          responses?: Json
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_reflections_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "founders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_strategies: {
+        Row: {
+          created_at: string
+          founder_id: string
+          id: string
+          strategy: Json
+          week_start: string
+        }
+        Insert: {
+          created_at?: string
+          founder_id: string
+          id?: string
+          strategy?: Json
+          week_start: string
+        }
+        Update: {
+          created_at?: string
+          founder_id?: string
+          id?: string
+          strategy?: Json
+          week_start?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_strategies_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "founders"
             referencedColumns: ["id"]
           },
         ]

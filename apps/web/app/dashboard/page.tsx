@@ -2,6 +2,7 @@ import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import Link from "next/link";
+import { ReflectionBanner } from "./reflection-banner";
 
 export default async function DashboardPage() {
   let founder;
@@ -68,6 +69,9 @@ export default async function DashboardPage() {
           {factCount ? `${factCount} brain facts · Mode: ${prefs?.mode ?? "assisted"}` : "Brain ready"}
         </p>
       </div>
+
+      {/* Weekly reflection prompt */}
+      {founder.reflection_pending && <ReflectionBanner />}
 
       {/* This week strategy */}
       {strategy && (
