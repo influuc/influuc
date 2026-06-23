@@ -1,8 +1,3 @@
-// Tell Next.js this middleware runs in the Node.js runtime so it doesn't
-// try to bundle @supabase/supabase-js (which uses process.version) for the
-// Edge Runtime.  Middleware in Next.js 15 supports both runtimes.
-export const runtime = "nodejs";
-
 import { createServerClient } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
 import { NextResponse } from "next/server";
