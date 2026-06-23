@@ -118,14 +118,13 @@ export async function extractBrainFacts(
   };
   const rawContent = data.choices[0]?.message?.content ?? "{}";
 
-  // Strip markdown code fences — Bedrock-routed models ignore response_format
-  const cleaned = rawContent
-    .replace(/^```(?:json)?\s*/i, "")
-    .replace(/\s*```$/i, "")
-    .trim();
+  // Extract the JSON object from the response — handles raw JSON, code-fenced
+  // JSON, and models that prepend explanation text before the code block.
+  const jsonMatch = rawContent.match(/\{[\s\S]*\}/);
+  if (!jsonMatch) return emptyBrain();
 
   try {
-    const parsed = JSON.parse(cleaned) as Partial<Record<BrainLayer, unknown>>;
+    const parsed = JSON.parse(jsonMatch[0]) as Partial<Record<BrainLayer, unknown>>;
     const result = emptyBrain();
     for (const layer of BRAIN_LAYERS) {
       const facts = parsed[layer];
