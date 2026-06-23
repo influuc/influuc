@@ -771,6 +771,9 @@ export type Database = {
           approval_threshold: number | null
           autopilot_enabled: boolean
           autopilot_threshold: number | null
+          content_goals: string[]
+          extra_notes: string | null
+          focus_topics: string[]
           founder_id: string
           max_autopilot_per_day: number | null
           mode: Database["public"]["Enums"]["autonomy_mode"]
@@ -778,12 +781,16 @@ export type Database = {
             | Database["public"]["Enums"]["target_platform"][]
             | null
           prohibited_topics: string[] | null
+          tone: string | null
           updated_at: string
         }
         Insert: {
           approval_threshold?: number | null
           autopilot_enabled?: boolean
           autopilot_threshold?: number | null
+          content_goals?: string[]
+          extra_notes?: string | null
+          focus_topics?: string[]
           founder_id: string
           max_autopilot_per_day?: number | null
           mode?: Database["public"]["Enums"]["autonomy_mode"]
@@ -791,12 +798,16 @@ export type Database = {
             | Database["public"]["Enums"]["target_platform"][]
             | null
           prohibited_topics?: string[] | null
+          tone?: string | null
           updated_at?: string
         }
         Update: {
           approval_threshold?: number | null
           autopilot_enabled?: boolean
           autopilot_threshold?: number | null
+          content_goals?: string[]
+          extra_notes?: string | null
+          focus_topics?: string[]
           founder_id?: string
           max_autopilot_per_day?: number | null
           mode?: Database["public"]["Enums"]["autonomy_mode"]
@@ -804,6 +815,7 @@ export type Database = {
             | Database["public"]["Enums"]["target_platform"][]
             | null
           prohibited_topics?: string[] | null
+          tone?: string | null
           updated_at?: string
         }
         Relationships: [
