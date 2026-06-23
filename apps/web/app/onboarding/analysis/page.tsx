@@ -16,9 +16,10 @@ export default async function AnalysisPage() {
     redirect("/sign-in");
   }
 
-  if (founder.onboarding_state === "summary") {
-    redirect("/onboarding/summary");
-  }
+  if (founder.onboarding_state === "summary") redirect("/onboarding/summary");
+  if (founder.onboarding_state === "paywall") redirect("/onboarding/paywall");
+  if (founder.onboarding_state === "preferences" || founder.onboarding_state === "trial") redirect("/onboarding/preferences");
+  if (founder.onboarding_state === "done") redirect("/dashboard");
 
   if (
     founder.onboarding_state === "landing" ||
@@ -28,9 +29,7 @@ export default async function AnalysisPage() {
     redirect("/onboarding/connect");
   }
 
-  if (founder.onboarding_state === "capture") {
-    redirect("/onboarding/capture");
-  }
+  if (founder.onboarding_state === "capture") redirect("/onboarding/capture");
 
   return (
     <div
