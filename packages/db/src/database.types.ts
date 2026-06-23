@@ -1301,6 +1301,101 @@ export type Database = {
           },
         ]
       }
+      weekly_strategies: {
+        Row: {
+          id: string
+          founder_id: string
+          week_start: string
+          strategy: Json
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          week_start: string
+          strategy?: Json
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          founder_id?: string
+          week_start?: string
+          strategy?: Json
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_strategies_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "founders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      weekly_posts: {
+        Row: {
+          id: string
+          founder_id: string
+          strategy_id: string
+          week_start: string
+          platform: string
+          scheduled_date: string
+          post_type: string
+          sort_order: number
+          content: string
+          status: string
+          published_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          founder_id: string
+          strategy_id: string
+          week_start: string
+          platform: string
+          scheduled_date: string
+          post_type: string
+          sort_order?: number
+          content: string
+          status?: string
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          founder_id?: string
+          strategy_id?: string
+          week_start?: string
+          platform?: string
+          scheduled_date?: string
+          post_type?: string
+          sort_order?: number
+          content?: string
+          status?: string
+          published_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "weekly_posts_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "founders"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "weekly_posts_strategy_id_fkey"
+            columns: ["strategy_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_strategies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
