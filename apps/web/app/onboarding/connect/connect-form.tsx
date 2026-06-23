@@ -15,13 +15,32 @@ interface ConnectFormProps {
 
 export function ConnectForm({ connections, initialError }: ConnectFormProps) {
   const router = useRouter();
-  const [error] = useState(initialError ?? null);
+  const [error, setError] = useState(initialError ?? null);
+  const [advancing, setAdvancing] = useState(false);
 
   const xConn = connections["x"];
   const liConn = connections["linkedin"];
   const xConnected = xConn?.status === "active";
   const liConnected = liConn?.status === "active";
-  const anyConnected = xConnected || liConnected;
+  const bothConnected = xConnected && liConnected;
+
+  async function handleContinue() {
+    setAdvancing(true);
+    setError(null);
+    try {
+      const res = await fetch("/api/onboarding/advance-connect", { method: "POST" });
+      if (res.ok) {
+        router.push("/onboarding/extension");
+      } else {
+        const body = (await res.json()) as { error?: string };
+        setError(body.error ?? "Something went wrong.");
+        setAdvancing(false);
+      }
+    } catch {
+      setError("Network error — please try again.");
+      setAdvancing(false);
+    }
+  }
 
   return (
     <div
@@ -69,37 +88,37 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
         connectHref="/api/oauth/linkedin"
       />
 
-      {/* Continue — enabled once ≥1 connected */}
+      {/* Status hint */}
+      {!bothConnected && (
+        <p style={{ fontSize: "0.78rem", color: "var(--muted)", textAlign: "center", lineHeight: 1.5, margin: 0 }}>
+          {!xConnected && !liConnected
+            ? "Connect both X and LinkedIn to continue."
+            : !xConnected
+            ? "✓ LinkedIn connected — now connect X to continue."
+            : "✓ X connected — now connect LinkedIn to continue."}
+        </p>
+      )}
+
+      {/* Continue — requires both */}
       <button
-        onClick={() => router.push("/onboarding/extension")}
-        disabled={!anyConnected}
+        onClick={() => void handleContinue()}
+        disabled={!bothConnected || advancing}
         style={{
-          marginTop: "0.5rem",
+          marginTop: "0.25rem",
           padding: "0.875rem 1.5rem",
           borderRadius: "0.625rem",
           border: "none",
-          background: anyConnected ? "var(--accent)" : "rgba(255,255,255,0.08)",
-          color: anyConnected ? "#fff" : "var(--muted)",
+          background: bothConnected ? "var(--accent)" : "rgba(255,255,255,0.08)",
+          color: bothConnected ? "#fff" : "var(--muted)",
           fontWeight: 600,
           fontSize: "0.95rem",
-          cursor: anyConnected ? "pointer" : "not-allowed",
+          cursor: bothConnected && !advancing ? "pointer" : "not-allowed",
           transition: "opacity 0.15s",
-          opacity: anyConnected ? 1 : 0.5,
+          opacity: bothConnected && !advancing ? 1 : 0.5,
         }}
       >
-        Continue →
+        {advancing ? "Setting up…" : "Continue →"}
       </button>
-
-      <p
-        style={{
-          fontSize: "0.75rem",
-          color: "var(--muted)",
-          textAlign: "center",
-          lineHeight: 1.5,
-        }}
-      >
-        You can connect both now or add the second platform later from settings.
-      </p>
     </div>
   );
 }

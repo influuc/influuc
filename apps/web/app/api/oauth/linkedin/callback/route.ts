@@ -112,14 +112,8 @@ export async function GET(request: NextRequest) {
       { onConflict: "founder_id,platform" }
     );
 
-    // Advance onboarding state (only if still at 'connect')
-    await db
-      .from("founders")
-      .update({ onboarding_state: "extension" })
-      .eq("id", savedState.founderId)
-      .eq("onboarding_state", "connect");
-
-    const response = NextResponse.redirect(`${origin}/onboarding/extension`);
+    // Redirect back to connect so user can also connect X
+    const response = NextResponse.redirect(`${origin}/onboarding/connect`);
     response.cookies.delete("li_oauth_state");
     return response;
   } catch (err) {

@@ -117,15 +117,8 @@ export async function GET(request: NextRequest) {
       { onConflict: "founder_id,platform" }
     );
 
-    // Advance onboarding state (only if still at 'connect')
-    await db
-      .from("founders")
-      .update({ onboarding_state: "extension" })
-      .eq("id", savedState.founderId)
-      .eq("onboarding_state", "connect");
-
-    // Clear state cookie + redirect
-    const response = NextResponse.redirect(`${origin}/onboarding/extension`);
+    // Redirect back to connect so user can also connect LinkedIn
+    const response = NextResponse.redirect(`${origin}/onboarding/connect`);
     response.cookies.delete("x_oauth_state");
     return response;
   } catch (err) {

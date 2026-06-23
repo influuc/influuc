@@ -5,84 +5,75 @@ const storage = new Storage();
 const APP_BASE = "https://influuc-two.vercel.app";
 const LOCAL_BASE = "http://localhost:3000";
 
-type Status = "idle" | "loading" | "success" | "error";
+type Screen =
+  | "loading"
+  | "disconnected"
+  | "idle"
+  | "permission"
+  | "scraping"
+  | "done"
+  | "error";
 
-interface ScrapeResult {
-  ok: boolean;
-  error?: string;
+interface Progress {
+  stage: "x" | "linkedin" | "complete";
+  status: "opening" | "uploading" | "done" | "failed";
+  count?: number;
+  xCount?: number;
+  liCount?: number;
 }
 
 export default function Popup() {
-  const [token, setToken] = useState<string | null>(null);
-  const [currentUrl, setCurrentUrl] = useState<string>("");
-  const [status, setStatus] = useState<Status>("idle");
-  const [statusMsg, setStatusMsg] = useState("");
+  const [screen, setScreen] = useState<Screen>("loading");
+  const [currentUrl, setCurrentUrl] = useState("");
+  const [progress, setProgress] = useState<Progress | null>(null);
+  const [errorMsg, setErrorMsg] = useState("");
 
-  // Load persisted token on mount
   useEffect(() => {
-    void storage.get<string>("influucToken").then((t) => setToken(t ?? null));
-
-    // Get current tab URL
+    void storage.get<string>("influucToken").then((t) => {
+      setScreen(t ? "idle" : "disconnected");
+    });
     chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
       setCurrentUrl(tabs[0]?.url ?? "");
     });
-  }, []);
 
-  // Detect what platform the current tab is
-  const isX = currentUrl.includes("x.com") || currentUrl.includes("twitter.com");
-  const isLinkedIn = currentUrl.includes("linkedin.com/in/");
+    // Listen for progress updates from background
+    const handler = (msg: Record<string, unknown>) => {
+      if (msg.type === "SCRAPE_PROGRESS") {
+        const p = msg as unknown as Progress & { type: string };
+        setProgress(p);
+        if (p.stage === "complete") setScreen("done");
+        if (p.status === "failed" && p.stage !== "complete") {
+          // don't abort — just note the failure and continue
+        }
+      }
+    };
+    chrome.runtime.onMessage.addListener(handler);
+    return () => chrome.runtime.onMessage.removeListener(handler);
+  }, []);
 
   function openConnectPage() {
     const extId = chrome.runtime.id;
     const base = currentUrl.startsWith("http://localhost") ? LOCAL_BASE : APP_BASE;
-    chrome.tabs.create({ url: `${base}/extension-auth?ext_id=${extId}` });
+    void chrome.tabs.create({ url: `${base}/extension-auth?ext_id=${extId}` });
     window.close();
   }
 
   async function disconnect() {
     await storage.remove("influucToken");
     await storage.remove("founderId");
-    setToken(null);
-    setStatus("idle");
-    setStatusMsg("");
+    setScreen("disconnected");
+    setProgress(null);
   }
 
-  async function scrapeCurrentTab(platform: "x" | "linkedin") {
-    setStatus("loading");
-    setStatusMsg(platform === "x" ? "Reading your X profile…" : "Reading your LinkedIn profile…");
-
-    try {
-      const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-      if (!tab.id || !tab.url) throw new Error("No active tab");
-
-      // Inject content script and get scraped data back
-      const [result] = await chrome.scripting.executeScript({
-        target: { tabId: tab.id },
-        func: platform === "x" ? scrapeX : scrapeLinkedIn,
-      });
-
-      const scraped = result.result as Record<string, unknown> | null;
-      if (!scraped) throw new Error("Nothing found to scrape on this page");
-
-      // Send to background for upload
-      const response = await chrome.runtime.sendMessage({
-        type: "INGEST",
-        platform,
-        profileUrl: tab.url,
-        data: scraped,
-      }) as ScrapeResult;
-
-      if (response.ok) {
-        setStatus("success");
-        setStatusMsg("Added to your Brain ✓");
-        setTimeout(() => { setStatus("idle"); setStatusMsg(""); }, 3000);
-      } else {
-        throw new Error(response.error ?? "Upload failed");
+  function startScrape() {
+    setScreen("scraping");
+    setProgress(null);
+    chrome.runtime.sendMessage({ type: "START_SCRAPE" }, (res: { ok: boolean; error?: string }) => {
+      if (!res?.ok && res?.error) {
+        setErrorMsg(res.error);
+        setScreen("error");
       }
-    } catch (err) {
-      setStatus("error");
-      setStatusMsg(String(err instanceof Error ? err.message : err));
-    }
+    });
   }
 
   return (
@@ -98,140 +89,124 @@ export default function Popup() {
         <span style={styles.title}>Influuc</span>
       </div>
 
-      {!token ? (
-        // Not connected
+      {/* ── Screens ── */}
+
+      {screen === "loading" && (
+        <div style={styles.body}>
+          <Spinner />
+        </div>
+      )}
+
+      {screen === "disconnected" && (
         <div style={styles.body}>
           <p style={styles.desc}>Connect Influuc to import your X and LinkedIn profiles into your Founder Brain.</p>
           <button style={styles.primaryBtn} onClick={openConnectPage}>
             Connect Influuc →
           </button>
         </div>
-      ) : (
-        // Connected
+      )}
+
+      {screen === "idle" && (
         <div style={styles.body}>
-          <p style={{ ...styles.desc, color: "#4ade80", fontSize: "0.75rem" }}>● Connected</p>
-
-          {/* Context-aware scrape buttons */}
-          {isX && (
-            <button
-              style={status === "loading" ? { ...styles.platformBtn, opacity: 0.6 } : styles.platformBtn}
-              disabled={status === "loading"}
-              onClick={() => void scrapeCurrentTab("x")}
-            >
-              <XIcon /> Import X profile to Brain
-            </button>
-          )}
-          {isLinkedIn && (
-            <button
-              style={status === "loading" ? { ...styles.platformBtn, opacity: 0.6 } : styles.platformBtn}
-              disabled={status === "loading"}
-              onClick={() => void scrapeCurrentTab("linkedin")}
-            >
-              <LinkedInIcon /> Import LinkedIn profile to Brain
-            </button>
-          )}
-          {!isX && !isLinkedIn && (
-            <p style={styles.hint}>
-              Navigate to your X or LinkedIn profile, then click the import button here.
-            </p>
-          )}
-
-          {/* Status */}
-          {statusMsg && (
-            <p style={{ ...styles.hint, color: status === "error" ? "#f87171" : status === "success" ? "#4ade80" : "var(--muted)" }}>
-              {statusMsg}
-            </p>
-          )}
-
-          <button style={styles.disconnectBtn} onClick={() => void disconnect()}>
-            Disconnect
+          <p style={{ ...styles.desc, color: "#4ade80", fontSize: "0.75rem", marginBottom: "0.25rem" }}>● Connected</p>
+          <p style={styles.desc}>Import your X posts and LinkedIn profile into your Founder Brain.</p>
+          <button style={styles.primaryBtn} onClick={() => setScreen("permission")}>
+            Auto-Import Profiles →
           </button>
+          <button style={styles.disconnectBtn} onClick={() => void disconnect()}>Disconnect</button>
+        </div>
+      )}
+
+      {screen === "permission" && (
+        <div style={styles.body}>
+          <div style={styles.permIcon}>🔍</div>
+          <p style={{ ...styles.desc, fontWeight: 600, marginBottom: "0.25rem" }}>Allow profile import?</p>
+          <p style={{ ...styles.hint, marginBottom: "0.5rem" }}>
+            Influuc will open your X and LinkedIn profiles in browser tabs (visible to you), scroll through your posts, and save them to your Founder Brain. No passwords stored.
+          </p>
+          <button style={styles.primaryBtn} onClick={startScrape}>
+            Allow & Start Import
+          </button>
+          <button style={styles.ghostBtn} onClick={() => setScreen("idle")}>
+            Cancel
+          </button>
+        </div>
+      )}
+
+      {screen === "scraping" && (
+        <div style={styles.body}>
+          <Spinner />
+          <p style={{ ...styles.desc, fontWeight: 600 }}>Importing your profiles…</p>
+          {progress && (
+            <div style={styles.progressList}>
+              <ProgressRow
+                label="X (Twitter)"
+                status={progress.stage === "x" ? progress.status : progress.stage === "complete" || (progress.stage === "linkedin") ? "done" : "waiting"}
+                count={progress.stage !== "x" && (progress.stage === "linkedin" || progress.stage === "complete") ? progress.xCount : progress.count}
+              />
+              <ProgressRow
+                label="LinkedIn"
+                status={progress.stage === "linkedin" ? progress.status : progress.stage === "complete" ? "done" : "waiting"}
+                count={progress.stage === "linkedin" ? progress.count : progress.stage === "complete" ? progress.liCount : undefined}
+              />
+            </div>
+          )}
+          <p style={styles.hint}>Keep this popup open. Tabs will close automatically.</p>
+        </div>
+      )}
+
+      {screen === "done" && (
+        <div style={styles.body}>
+          <div style={{ fontSize: "2rem", textAlign: "center" }}>✓</div>
+          <p style={{ ...styles.desc, fontWeight: 600, color: "#4ade80" }}>Import complete!</p>
+          {progress?.stage === "complete" && (
+            <p style={styles.hint}>
+              {progress.xCount ? `${progress.xCount} X posts` : ""}
+              {progress.xCount && progress.liCount ? " + " : ""}
+              {progress.liCount ? `${progress.liCount} LinkedIn posts` : ""}
+              {" "}saved to your Founder Brain.
+            </p>
+          )}
+          <button style={styles.primaryBtn} onClick={() => setScreen("idle")}>Done</button>
+        </div>
+      )}
+
+      {screen === "error" && (
+        <div style={styles.body}>
+          <p style={{ ...styles.desc, color: "#f87171", fontWeight: 600 }}>Import failed</p>
+          <p style={{ ...styles.hint, color: "#f87171" }}>{errorMsg}</p>
+          <button style={styles.ghostBtn} onClick={() => setScreen("idle")}>Back</button>
         </div>
       )}
     </div>
   );
 }
 
-// ─── Scrapers (injected into page via executeScript) ─────────────────────────
+// ─── Sub-components ───────────────────────────────────────────────────────────
 
-function scrapeX(): Record<string, unknown> | null {
-  function text(sel: string) {
-    return (document.querySelector(sel) as HTMLElement | null)?.innerText?.trim() ?? null;
-  }
-  const name = text('[data-testid="UserName"] span:first-child');
-  if (!name) return null;
-
-  const bio = text('[data-testid="UserDescription"]');
-  const location = text('[data-testid="UserLocation"] span:last-child');
-  const website = (document.querySelector('[data-testid="UserUrl"] a') as HTMLAnchorElement | null)?.href ?? null;
-  const followersEl = document.querySelector('[href$="/verified_followers"] ~ * span, a[href$="/followers"] span');
-  const followers = followersEl?.textContent?.trim() ?? null;
-
-  const tweetEls = Array.from(document.querySelectorAll('article[data-testid="tweet"]'));
-  const tweets = tweetEls
-    .map((el) => {
-      const t = (el.querySelector('[data-testid="tweetText"]') as HTMLElement | null)?.innerText?.trim();
-      const time = (el.querySelector("time") as HTMLTimeElement | null)?.dateTime ?? null;
-      return t ? { text: t, time } : null;
-    })
-    .filter(Boolean)
-    .slice(0, 100);
-
-  return { name, bio, location, website, followers, tweets, scrapedAt: new Date().toISOString() };
-}
-
-function scrapeLinkedIn(): Record<string, unknown> | null {
-  function text(sel: string) {
-    return (document.querySelector(sel) as HTMLElement | null)?.innerText?.trim() ?? null;
-  }
-  const name = text('.text-heading-xlarge') ?? text('h1');
-  if (!name) return null;
-
-  const headline = text('.text-body-medium.break-words') ?? text('.pv-text-details__left-panel .text-body-medium');
-  const location = text('.text-body-small.inline.t-black--light.break-words');
-
-  // About — LinkedIn hides overflow behind "see more"
-  const aboutEl = document.querySelector('#about') as HTMLElement | null;
-  const about = aboutEl
-    ? (aboutEl.closest('section')?.querySelector('.pv-shared-text-with-see-more, .visually-hidden') as HTMLElement | null)?.innerText?.trim()
-      ?? (aboutEl.nextElementSibling as HTMLElement | null)?.innerText?.trim()
-    : null;
-
-  // Experience
-  const expSection = document.querySelector('#experience') as HTMLElement | null;
-  const experiences = expSection
-    ? Array.from(expSection.closest('section')?.querySelectorAll('li.artdeco-list__item') ?? []).map((li) => ({
-        title: (li.querySelector('.t-bold span[aria-hidden="true"]') as HTMLElement | null)?.innerText?.trim(),
-        company: (li.querySelectorAll('.t-14.t-normal span[aria-hidden="true"]')[0] as HTMLElement | null)?.innerText?.trim(),
-        duration: (li.querySelector('.t-14.t-black--light span[aria-hidden="true"]') as HTMLElement | null)?.innerText?.trim(),
-      })).filter((e) => e.title)
-    : [];
-
-  // Recent posts on profile feed
-  const postEls = Array.from(document.querySelectorAll('.feed-shared-update-v2__description-wrapper, .update-components-text'));
-  const posts = postEls
-    .map((el) => (el as HTMLElement).innerText?.trim())
-    .filter(Boolean)
-    .slice(0, 50);
-
-  return { name, headline, location, about, experiences, posts, scrapedAt: new Date().toISOString() };
-}
-
-// ─── Icons ────────────────────────────────────────────────────────────────────
-
-function XIcon() {
+function ProgressRow({ label, status, count }: { label: string; status: string; count?: number }) {
+  const icon = status === "done" ? "✓" : status === "failed" ? "✗" : status === "waiting" ? "○" : "…";
+  const color = status === "done" ? "#4ade80" : status === "failed" ? "#f87171" : status === "waiting" ? "rgba(255,255,255,0.3)" : "var(--accent)";
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ flexShrink: 0 }}>
-      <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-4.714-6.231-5.401 6.231H2.748l7.73-8.835L1.254 2.25H8.08l4.259 5.63 5.905-5.63zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-    </svg>
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", fontSize: "0.8rem" }}>
+      <span style={{ color, width: 14, textAlign: "center", flexShrink: 0 }}>{icon}</span>
+      <span style={{ flex: 1 }}>{label}</span>
+      {count !== undefined && <span style={{ color: "var(--muted)", fontSize: "0.75rem" }}>{count} posts</span>}
+    </div>
   );
 }
 
-function LinkedInIcon() {
+function Spinner() {
   return (
-    <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden style={{ flexShrink: 0 }}>
-      <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
-    </svg>
+    <div style={{
+      width: 20, height: 20, margin: "0 auto",
+      border: "2px solid rgba(255,255,255,0.15)",
+      borderTopColor: "var(--accent)",
+      borderRadius: "50%",
+      animation: "spin 0.7s linear infinite",
+    }}>
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+    </div>
   );
 }
 
@@ -239,7 +214,7 @@ function LinkedInIcon() {
 
 const styles: Record<string, React.CSSProperties> = {
   container: {
-    width: 260,
+    width: 270,
     fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
     background: "#0f0f11",
     color: "#f2f2f2",
@@ -268,9 +243,11 @@ const styles: Record<string, React.CSSProperties> = {
     display: "flex",
     flexDirection: "column",
     gap: "0.75rem",
+    minHeight: 160,
+    justifyContent: "center",
   },
-  desc: { color: "rgba(255,255,255,0.55)", lineHeight: 1.5, margin: 0 },
-  hint: { color: "rgba(255,255,255,0.4)", fontSize: "0.78rem", lineHeight: 1.5, margin: 0 },
+  desc: { color: "rgba(255,255,255,0.6)", lineHeight: 1.55, margin: 0, fontSize: "0.83rem" },
+  hint: { color: "rgba(255,255,255,0.38)", fontSize: "0.76rem", lineHeight: 1.5, margin: 0 },
   primaryBtn: {
     padding: "0.625rem 1rem",
     borderRadius: "0.5rem",
@@ -282,26 +259,36 @@ const styles: Record<string, React.CSSProperties> = {
     cursor: "pointer",
     textAlign: "center",
   },
-  platformBtn: {
-    padding: "0.625rem 0.875rem",
+  ghostBtn: {
+    padding: "0.5rem 1rem",
     borderRadius: "0.5rem",
-    background: "rgba(255,255,255,0.07)",
+    background: "rgba(255,255,255,0.06)",
     border: "1px solid rgba(255,255,255,0.1)",
-    color: "#f2f2f2",
-    fontWeight: 500,
+    color: "rgba(255,255,255,0.55)",
     fontSize: "0.82rem",
     cursor: "pointer",
-    display: "flex",
-    alignItems: "center",
-    gap: "0.5rem",
+    textAlign: "center",
   },
   disconnectBtn: {
-    padding: "0.4rem 0",
+    padding: "0.35rem 0",
     background: "none",
     border: "none",
-    color: "rgba(255,255,255,0.3)",
-    fontSize: "0.75rem",
+    color: "rgba(255,255,255,0.25)",
+    fontSize: "0.73rem",
     cursor: "pointer",
     textAlign: "left",
+  },
+  permIcon: {
+    fontSize: "1.75rem",
+    textAlign: "center",
+  },
+  progressList: {
+    display: "flex",
+    flexDirection: "column",
+    gap: "0.5rem",
+    padding: "0.75rem",
+    borderRadius: "0.5rem",
+    background: "rgba(255,255,255,0.04)",
+    border: "1px solid rgba(255,255,255,0.07)",
   },
 };

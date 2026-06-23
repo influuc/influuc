@@ -67,19 +67,41 @@ export const brainBootstrap = task({
         break;
       }
       case "x": {
+        // Handles both X API format (username, tweets[]) and extension format (name, bio, tweets[{text,time}])
         const tweets = (raw.tweets as Array<{ text: string }>) ?? [];
-        const username = (raw.username as string) ?? "";
-        content = `Twitter/X posts by @${username}:\n\n` +
-          tweets.map((t) => t.text).join("\n\n");
+        const handle = (raw.username as string) ?? (raw.name as string) ?? "";
+        const bio = (raw.bio as string) ?? "";
+        const parts: string[] = [`Twitter/X: @${handle}`];
+        if (bio) parts.push(`Bio: ${bio}`);
+        parts.push("", "Posts:", ...tweets.map((t) => t.text).filter(Boolean));
+        content = parts.join("\n\n");
         break;
       }
       case "linkedin": {
-        const profile = raw.profile as Record<string, unknown> | undefined;
-        const posts = (raw.posts as Array<{ text: string }>) ?? [];
-        const headline = (profile?.headline as string) ?? "";
-        const about = (profile?.about as string) ?? "";
-        const postsText = posts.map((p) => p.text).join("\n\n");
-        content = [headline, about, postsText].filter(Boolean).join("\n\n");
+        // Handles both API format (profile.{headline,about}, posts[{text}]) and extension format (name, headline, about, experiences[], posts[string])
+        const name = (raw.name as string) ?? "";
+        const headline = (raw.headline as string) ?? ((raw.profile as Record<string, unknown> | undefined)?.headline as string) ?? "";
+        const about = (raw.about as string) ?? ((raw.profile as Record<string, unknown> | undefined)?.about as string) ?? "";
+        const experiences = (raw.experiences as Array<{ title?: string; company?: string; duration?: string }>) ?? [];
+        const rawPosts = (raw.posts as Array<string | { text: string }>) ?? [];
+        const parts: string[] = [];
+        if (name) parts.push(`LinkedIn: ${name}`);
+        if (headline) parts.push(`Headline: ${headline}`);
+        if (about) parts.push(`About: ${about}`);
+        if (experiences.length > 0) {
+          parts.push("Experience:");
+          for (const e of experiences) {
+            if (e.title) parts.push(`  • ${e.title}${e.company ? ` @ ${e.company}` : ""}${e.duration ? ` (${e.duration})` : ""}`);
+          }
+        }
+        if (rawPosts.length > 0) {
+          parts.push("Posts:");
+          for (const p of rawPosts) {
+            const text = typeof p === "string" ? p : p.text;
+            if (text) parts.push(text);
+          }
+        }
+        content = parts.join("\n\n");
         break;
       }
       case "manual":
