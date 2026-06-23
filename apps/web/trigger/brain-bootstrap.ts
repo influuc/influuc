@@ -3,6 +3,19 @@ import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@influuc/db";
 import { extractBrainFacts } from "../lib/openrouter";
 
+// Trigger.dev runs on Node.js 21 which lacks native WebSocket.
+// Supabase's createClient initialises RealtimeClient in its constructor even
+// if we never use realtime — polyfill with a no-op stub so the rest API works.
+if (typeof globalThis.WebSocket === "undefined") {
+  // @ts-ignore
+  globalThis.WebSocket = class StubWS extends EventTarget {
+    static CONNECTING = 0; static OPEN = 1; static CLOSING = 2; static CLOSED = 3;
+    readyState = 3;
+    close() {}
+    send() {}
+  };
+}
+
 function createDb() {
   return createClient<Database>(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,

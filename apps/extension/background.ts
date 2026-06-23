@@ -105,13 +105,18 @@ async function handleStartScrape(): Promise<{ ok: boolean; error?: string; xCoun
   }
 
   // ── Scrape LinkedIn ──
-  if (linkedinHandle) {
+  // Use /in/me which LinkedIn redirects to the logged-in user's own profile —
+  // avoids needing a vanity URL slug stored from OAuth.
+  if (linkedinHandle !== null) {
     void sendProgress({ stage: "linkedin", status: "opening" });
-    const liData = await openAndScrape(`https://www.linkedin.com/in/${linkedinHandle}/`, 30);
+    const liUrl = linkedinHandle && !linkedinHandle.includes(" ")
+      ? `https://www.linkedin.com/in/${linkedinHandle}/`
+      : "https://www.linkedin.com/in/me";
+    const liData = await openAndScrape(liUrl, 30);
     if (liData) {
       liCount = (liData.posts as unknown[])?.length ?? 0;
       void sendProgress({ stage: "linkedin", status: "uploading", count: liCount });
-      await postToIngest(token, apiBase, "linkedin", `https://www.linkedin.com/in/${linkedinHandle}/`, liData);
+      await postToIngest(token, apiBase, "linkedin", liUrl, liData);
       void sendProgress({ stage: "linkedin", status: "done", count: liCount });
     } else {
       void sendProgress({ stage: "linkedin", status: "failed" });

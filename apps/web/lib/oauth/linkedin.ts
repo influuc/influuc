@@ -97,9 +97,23 @@ export async function getLinkedInProfile(
     email: string;
   };
 
+  // Try to get the vanity URL slug (e.g. "abhinav-singh-123") from the v2 API.
+  // Falls back to full name if unavailable (extensions use /in/me redirect instead).
+  let handle = json.name;
+  try {
+    const meRes = await fetch(
+      "https://api.linkedin.com/v2/me?projection=(vanityName)",
+      { headers: { Authorization: `Bearer ${accessToken}` } }
+    );
+    if (meRes.ok) {
+      const me = (await meRes.json()) as { vanityName?: string };
+      if (me.vanityName) handle = me.vanityName;
+    }
+  } catch { /* best-effort */ }
+
   return {
     platformUserId: json.sub,
-    handle: json.name, // LinkedIn uses full name (no @handle)
+    handle,
     name: json.name,
     email: json.email,
   };
