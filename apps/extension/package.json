@@ -1,0 +1,44 @@
+{
+  "name": "@influuc/extension",
+  "displayName": "Influuc",
+  "version": "0.1.0",
+  "description": "Import your own X & LinkedIn profile into your Influuc Founder Brain",
+  "private": true,
+  "scripts": {
+    "dev": "plasmo dev",
+    "build": "plasmo build",
+    "package": "plasmo package",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@plasmohq/storage": "^1.13.0",
+    "plasmo": "0.90.5",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.299",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "typescript": "^5.6.3"
+  },
+  "manifest": {
+    "host_permissions": [
+      "https://*.linkedin.com/*",
+      "https://x.com/*",
+      "https://twitter.com/*"
+    ],
+    "permissions": [
+      "storage",
+      "activeTab",
+      "scripting",
+      "tabs"
+    ],
+    "externally_connectable": {
+      "matches": [
+        "https://influuc-two.vercel.app/*",
+        "http://localhost:3000/*"
+      ]
+    }
+  }
+}
