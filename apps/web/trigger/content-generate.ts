@@ -110,7 +110,7 @@ async function callOpenRouter(model: string, prompt: string, systemPrompt: strin
 function addDays(dateStr: string, days: number): string {
   const d = new Date(dateStr + "T00:00:00Z");
   d.setUTCDate(d.getUTCDate() + days);
-  return d.toISOString().split("T")[0];
+  return d.toISOString().split("T")[0]!;
 }
 
 export const contentGenerate = task({
@@ -129,7 +129,7 @@ export const contentGenerate = task({
       .from("brain_facts")
       .select("layer, key, content, confidence")
       .eq("founder_id", founderId)
-      .eq("active", true)
+      .eq("status", "active")
       .order("confidence", { ascending: false })
       .limit(60);
 
@@ -214,7 +214,7 @@ The ideas array must have exactly 7 entries (day 1 = ${weekStart}, day 2 = ${add
     const { data: strategyRow, error: stratErr } = await db
       .from("weekly_strategies")
       .upsert(
-        { founder_id: founderId, week_start: weekStart, strategy: { ...strategy, ideas } },
+        { founder_id: founderId, week_start: weekStart, strategy: { ...strategy, ideas } as unknown as Database["public"]["Tables"]["weekly_strategies"]["Insert"]["strategy"] },
         { onConflict: "founder_id,week_start" }
       )
       .select("id")
@@ -275,7 +275,7 @@ Return ONLY valid JSON:
     const postsToInsert: Database["public"]["Tables"]["weekly_posts"]["Insert"][] = [];
 
     for (let i = 0; i < ideas.length; i++) {
-      const idea = ideas[i];
+      const idea = ideas[i]!;
       const posts = postSets[i];
 
       if (!posts) {

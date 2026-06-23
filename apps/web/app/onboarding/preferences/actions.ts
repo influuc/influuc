@@ -51,7 +51,7 @@ export async function savePreferences(formData: FormData) {
   const monday = new Date(now);
   monday.setUTCDate(diff);
   monday.setUTCHours(0, 0, 0, 0);
-  const weekStart = monday.toISOString().split("T")[0];
+  const weekStart = monday.toISOString().split("T")[0]!;
 
   try {
     await tasks.trigger<typeof contentGenerate>("content.generate", {
