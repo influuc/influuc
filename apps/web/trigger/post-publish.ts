@@ -96,6 +96,17 @@ export const postPublish = task({
   maxDuration: 60,
   retry: { maxAttempts: 3, minTimeoutInMs: 5000, maxTimeoutInMs: 60000, factor: 2 },
 
+  // After all retries exhausted, mark the post as failed so the founder can see it
+  handleError: async ({ payload, error }) => {
+    const db = createDb();
+    await db
+      .from("weekly_posts")
+      .update({ status: "failed" })
+      .eq("id", payload.postId)
+      .eq("status", "scheduled");
+    logger.error("post.publish: permanently failed", { postId: payload.postId, error: String(error) });
+  },
+
   run: async (payload: PostPublishPayload) => {
     const { postId, founderId } = payload;
     const db = createDb();

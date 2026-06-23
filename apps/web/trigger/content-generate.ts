@@ -151,6 +151,34 @@ export const contentGenerate = task({
     const prohibited      = prohibitedRaw.length ? prohibitedRaw.join(", ") : "none";
     const extraNotes      = prefs?.extra_notes                  ?? "";
 
+    // ── 2b. Load last week's reflection ─────────────────────────────────────
+    const { data: lastReflection } = await db
+      .from("weekly_reflections")
+      .select("responses, week_start")
+      .eq("founder_id", founderId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single();
+
+    const reflection = lastReflection?.responses as {
+      best_performing?: string;
+      audience_reaction?: string;
+      wins?: string;
+      next_week_focus?: string;
+      anything_else?: string;
+    } | null;
+
+    const reflectionBlock = reflection
+      ? `
+LAST WEEK'S REFLECTION (use this to improve this week's strategy):
+- What performed best: ${reflection.best_performing || "not specified"}
+- Audience reaction: ${reflection.audience_reaction || "not specified"}
+- Wins/milestones: ${reflection.wins || "not specified"}
+- Focus for this week: ${reflection.next_week_focus || "not specified"}
+- Other notes: ${reflection.anything_else || "none"}
+`
+      : "";
+
     // ── 3. Strategy call (LLM Call 1) ────────────────────────────────────────
     logger.info("content.generate: strategy call starting");
 
@@ -165,6 +193,7 @@ CONTENT PREFERENCES:
 - Posting tone: ${tone}
 - Topics to avoid: ${prohibited}
 ${extraNotes ? `- Extra notes: ${extraNotes}` : ""}
+${reflectionBlock}
 
 Generate a weekly content strategy for the week starting ${weekStart} (Monday through Sunday, 7 days).
 
