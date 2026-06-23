@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+.pnpm-store/
+
+# Env / secrets — NEVER commit
+.env
+.env.local
+.env.*.local
+*.local
+
+# Build / framework
+.next/
+.turbo/
+dist/
+build/
+out/
+.vercel/
+
+# Plasmo (extension)
+.plasmo/
+build/chrome-mv3-*/
+
+# Logs / OS / editor
+*.log
+.DS_Store
+.idea/
+.vscode/*
+!.vscode/extensions.json
+
+# Supabase
+supabase/.branches/
+supabase/.temp/

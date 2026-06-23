@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__getAccessibleAtlassianResources",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__getVisibleJiraProjects",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__getConfluenceSpaces",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__createJiraIssue",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__getJiraIssue",
+      "Bash(ls -a '/c/Users/Abhinav/.claude/projects/D--influuc/memory/' 2>/dev/null || echo \"EMPTY_OR_MISSING\")",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__editJiraIssue",
+      "WebSearch",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__createConfluencePage",
+      "mcp__trigger__whoami",
+      "mcp__resend__list-domains",
+      "PowerShell(cmd /c \"node --version & echo --- & pnpm --version & echo --- & corepack --version & echo --- & git --version\")",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__list_organizations",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__list_projects",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__get_project_url",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__get_publishable_keys",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__list_extensions",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__list_tables",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__apply_migration",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__get_advisors",
+      "mcp__960140ed-b060-4226-b348-e57983ea5b91__generate_typescript_types",
+      "Bash(pnpm install *)",
+      "Bash(node -e \"require\\('@supabase/ssr'\\); console.log\\('ssr ok'\\); require\\('@supabase/supabase-js'\\); console.log\\('sjs ok'\\); require\\('stripe'\\); console.log\\('stripe ok'\\)\")",
+      "Bash(node -e \"console.log\\(require\\('D:/influuc/node_modules/@supabase/ssr/package.json'\\).version\\)\")",
+      "Bash(node -e \"const m = require\\('D:/influuc/node_modules/@supabase/ssr'\\); console.log\\(Object.keys\\(m\\)\\)\")",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__searchJiraIssuesUsingJql",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__getTransitionsForJiraIssue",
+      "mcp__eaf8cabc-b176-4997-946f-0548777f1579__transitionJiraIssue",
+      "mcp__0c618f36-dbc7-413c-a191-466efc2fca38__stripe_api_search",
+      "mcp__0c618f36-dbc7-413c-a191-466efc2fca38__stripe_api_write",
+      "Bash(pnpm build *)",
+      "Bash(pnpm add *)",
+      "Bash(pnpm typecheck *)"
+    ]
+  }
+}
