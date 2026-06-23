@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { getAnalysisState } from "./actions";
 
 interface ExtractionJob {
   id: string;
@@ -77,18 +78,11 @@ export function AnalysisProgress({ founderId }: AnalysisProgressProps) {
       }
     }
 
-    // Also check onboarding_state — the task may have already advanced it
+    // Server-action check — bypasses client auth issues
     async function checkState() {
-      const supabase = createClient();
-      const { data: founderRow } = await supabase
-        .from("founders")
-        .select("onboarding_state")
-        .eq("id", founderId)
-        .single();
+      const result = await getAnalysisState();
       if (cancelled) return;
-      const state = (founderRow as { onboarding_state?: string | null } | null)
-        ?.onboarding_state;
-      if (state === "summary") {
+      if (result?.onboarding_state === "summary") {
         setDone(true);
         clearInterval(interval);
         router.push("/onboarding/summary");
@@ -101,7 +95,7 @@ export function AnalysisProgress({ founderId }: AnalysisProgressProps) {
     tickInterval = setInterval(() => setElapsed((e) => e + 1), 1000);
     const timeoutId = setTimeout(() => {
       if (!cancelled) setTimedOut(true);
-    }, 45_000);
+    }, 15_000);
 
     return () => {
       cancelled = true;
@@ -168,9 +162,9 @@ export function AnalysisProgress({ founderId }: AnalysisProgressProps) {
         </p>
       )}
 
-      {timedOut && !done && !anyFailed && (
+      {timedOut && (
         <p style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
-          Taking longer than expected — the AI worker may not be running.{" "}
+          Taking longer than expected?{" "}
           <a href="/onboarding/summary" style={{ color: "var(--accent)", fontWeight: 600 }}>
             Skip to review →
           </a>
