@@ -10,7 +10,7 @@ export default async function ExtensionPage() {
     redirect("/sign-in");
   }
 
-  if (founder.onboarding_state === "connect") {
+  if (founder.onboarding_state === "landing" || founder.onboarding_state === "connect") {
     redirect("/onboarding/connect");
   }
 

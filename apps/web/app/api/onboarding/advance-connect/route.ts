@@ -41,7 +41,7 @@ export async function POST() {
     .from("founders")
     .update({ onboarding_state: "extension" })
     .eq("id", founder.id)
-    .eq("onboarding_state", "connect");
+    .in("onboarding_state", ["landing", "connect"]);
 
   return NextResponse.json({ ok: true });
 }
