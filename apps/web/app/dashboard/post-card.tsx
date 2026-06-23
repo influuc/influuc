@@ -3,7 +3,7 @@
 import { useState, useTransition } from "react";
 import { updatePostStatus, updatePostContent } from "./actions";
 
-export type PostStatus = "draft" | "approved" | "rejected" | "published" | "scheduled";
+export type PostStatus = "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed";
 export type PostType = "x_short" | "x_long" | "linkedin";
 
 interface PostCardProps {
@@ -39,10 +39,14 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
 
   const approved = status === "approved";
   const rejected = status === "rejected";
+  const published = status === "published";
+  const scheduled = status === "scheduled";
+  const failed = status === "failed";
+  const terminal = published || scheduled || failed;
 
   const cardStyle: React.CSSProperties = {
-    border: `1px solid ${approved ? "rgba(74,222,128,0.28)" : rejected ? "rgba(248,113,113,0.18)" : "rgba(255,255,255,0.08)"}`,
-    background: approved ? "rgba(74,222,128,0.04)" : rejected ? "rgba(248,113,113,0.04)" : "rgba(255,255,255,0.02)",
+    border: `1px solid ${approved ? "rgba(74,222,128,0.28)" : rejected ? "rgba(248,113,113,0.18)" : published ? "rgba(96,165,250,0.2)" : failed ? "rgba(251,146,60,0.28)" : "rgba(255,255,255,0.08)"}`,
+    background: approved ? "rgba(74,222,128,0.04)" : rejected ? "rgba(248,113,113,0.04)" : published ? "rgba(96,165,250,0.04)" : failed ? "rgba(251,146,60,0.04)" : "rgba(255,255,255,0.02)",
     borderRadius: "0.75rem",
     padding: "1rem 1.125rem",
     display: "flex",
@@ -115,7 +119,19 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
 
       {/* Actions */}
       <div style={{ display: "flex", gap: "0.5rem", alignItems: "center", marginTop: "0.125rem" }}>
-        {editing ? (
+        {terminal ? (
+          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%" }}>
+            {published && <span style={{ fontSize: "0.75rem", color: "#60a5fa" }}>✓ Live on platform</span>}
+            {scheduled && <span style={{ fontSize: "0.75rem", color: "#a78bfa" }}>⏱ Queued — posts at its scheduled slot</span>}
+            {failed && (
+              <>
+                <span style={{ fontSize: "0.75rem", color: "#fb923c" }}>✕ Failed to publish</span>
+                <div style={{ flex: 1 }} />
+                <Btn variant="reject" onClick={() => setStatusOpt("approved")} disabled={isPending}>Retry</Btn>
+              </>
+            )}
+          </div>
+        ) : editing ? (
           <>
             <Btn variant="accent" onClick={saveEdit} disabled={isPending}>Save</Btn>
             <Btn variant="ghost" onClick={() => { setEditing(false); setEditDraft(content); }}>Cancel</Btn>
@@ -146,6 +162,7 @@ function StatusBadge({ status }: { status: PostStatus }) {
     rejected:  { label: "Rejected",  color: "#f87171",                bg: "rgba(248,113,113,0.1)"  },
     published: { label: "Published", color: "#60a5fa",                bg: "rgba(96,165,250,0.1)"   },
     scheduled: { label: "Scheduled", color: "#a78bfa",                bg: "rgba(167,139,250,0.1)"  },
+    failed:    { label: "Failed",    color: "#fb923c",                bg: "rgba(251,146,60,0.1)"   },
   };
   const c = map[status] ?? map.draft;
   return (
