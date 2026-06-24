@@ -4,28 +4,28 @@ import { redirect } from "next/navigation";
 import { FactActions, AddFactForm } from "./brain-client";
 
 const LAYER_LABELS: Record<string, string> = {
-  identity:       "Identity",
-  expertise:      "Expertise",
-  positioning:    "Positioning",
-  audience:       "Audience",
-  personality:    "Personality",
-  goals:          "Goals",
-  beliefs:        "Beliefs",
-  experience:     "Experience",
-  achievements:   "Achievements",
-  interests:      "Interests",
-  voice:          "Voice & Tone",
-  social_proof:   "Social Proof",
-  pain_points:    "Pain Points",
-  values:         "Values",
+  identity:      "Identity",
+  expertise:     "Expertise",
+  offer:         "Offer",
+  audience:      "Audience",
+  positioning:   "Positioning",
+  belief:        "Beliefs",
+  story:         "Story",
+  writing_style: "Writing Style",
+  goal:          "Goals",
 };
 
 const LAYER_ORDER = [
-  "identity", "positioning", "expertise", "audience",
-  "personality", "voice", "goals", "beliefs",
-  "achievements", "experience", "interests", "values",
-  "pain_points", "social_proof",
+  "identity", "expertise", "positioning", "audience",
+  "offer", "belief", "goal", "story", "writing_style",
 ];
+
+function humanizeKey(key: string): string {
+  return key
+    .replace(/_/g, " ")
+    .toLowerCase()
+    .replace(/\b\w/g, c => c.toUpperCase());
+}
 
 export default async function BrainPage() {
   let founder;
@@ -92,9 +92,9 @@ export default async function BrainPage() {
 
       {/* Stats row */}
       <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-        <StatChip value={active.length} label="active facts" color="var(--success)" />
-        <StatChip value={candidates.length} label="needs review" color="#fb923c" />
-        <StatChip value={sortedLayers.length} label="categories" color="var(--accent-fg)" />
+        <StatChip value={active.length} label="active facts" color="var(--success)" glow="rgba(74,222,128,0.2)" />
+        <StatChip value={candidates.length} label="needs review" color="#fb923c" glow="rgba(251,146,60,0.2)" />
+        <StatChip value={sortedLayers.length} label="categories" color="var(--accent-fg)" glow="rgba(109,107,245,0.2)" />
       </div>
 
       {/* Candidates — show first so founder can action them */}
@@ -119,8 +119,9 @@ export default async function BrainPage() {
               <div key={fact.id} style={{
                 display: "flex", alignItems: "flex-start", gap: "0.875rem",
                 padding: "0.875rem 1rem",
-                background: "rgba(251,146,60,0.04)", border: "1px solid rgba(251,146,60,0.15)",
+                background: "rgba(251,146,60,0.06)",
                 borderRadius: 10,
+                boxShadow: "inset 3px 0 0 rgba(251,146,60,0.4)",
               }}>
                 <span style={{
                   width: 7, height: 7, borderRadius: "50%", flexShrink: 0,
@@ -128,8 +129,8 @@ export default async function BrainPage() {
                 }} />
                 <div style={{ flex: 1, minWidth: 0 }}>
                   {fact.key && fact.key !== fact.content && (
-                    <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--muted-2)", margin: "0 0 0.2rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                      {fact.key} · {LAYER_LABELS[fact.layer ?? ""] ?? fact.layer}
+                    <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--muted-2)", margin: "0 0 0.2rem", letterSpacing: "0.02em" }}>
+                      {humanizeKey(fact.key)}
                     </p>
                   )}
                   <p style={{ fontSize: "0.875rem", color: "var(--fg)", lineHeight: 1.6, margin: 0 }}>
@@ -147,7 +148,7 @@ export default async function BrainPage() {
       {active.length === 0 && candidates.length === 0 && (
         <div style={{
           padding: "3rem 2rem", textAlign: "center",
-          background: "var(--card)", border: "1px solid var(--border)", borderRadius: "var(--radius)",
+          background: "var(--card)", borderRadius: "var(--radius)",
         }}>
           <p style={{ color: "var(--muted)", fontSize: "0.875rem", lineHeight: 1.6, margin: 0 }}>
             No brain facts yet. Your Founder Brain builds up as the AI analyses your content during onboarding.
@@ -180,7 +181,7 @@ export default async function BrainPage() {
                 <div key={fact.id} style={{
                   display: "flex", alignItems: "flex-start", gap: "0.875rem",
                   padding: "0.875rem 1rem", background: "var(--card)",
-                  border: "1px solid var(--border)", borderRadius: 10,
+                  borderRadius: 10,
                 }}>
                   <span style={{
                     width: 7, height: 7, borderRadius: "50%", flexShrink: 0, marginTop: "0.35rem",
@@ -189,8 +190,8 @@ export default async function BrainPage() {
                   }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     {fact.key && fact.key !== fact.content && (
-                      <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--muted-2)", margin: "0 0 0.2rem", textTransform: "uppercase", letterSpacing: "0.04em" }}>
-                        {fact.key}
+                      <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--muted-2)", margin: "0 0 0.2rem", letterSpacing: "0.02em" }}>
+                        {humanizeKey(fact.key)}
                       </p>
                     )}
                     <p style={{ fontSize: "0.875rem", color: "var(--fg)", lineHeight: 1.6, margin: 0 }}>
@@ -201,7 +202,7 @@ export default async function BrainPage() {
                     {fact.source_kind && (
                       <span style={{
                         fontSize: "0.65rem", padding: "2px 7px", borderRadius: 4,
-                        background: "rgba(255,255,255,0.04)", border: "1px solid var(--border)",
+                        background: "rgba(255,255,255,0.05)",
                         color: "var(--muted-2)",
                       }}>
                         {fact.source_kind}
@@ -222,12 +223,13 @@ export default async function BrainPage() {
   );
 }
 
-function StatChip({ value, label, color }: { value: number; label: string; color: string }) {
+function StatChip({ value, label, color, glow }: { value: number; label: string; color: string; glow?: string }) {
   return (
     <div style={{
       display: "flex", alignItems: "center", gap: "0.5rem",
       padding: "0.4rem 0.875rem", borderRadius: 8,
-      background: "var(--card)", border: "1px solid var(--border)",
+      background: "var(--card)",
+      boxShadow: glow ? `0 0 12px ${glow}` : undefined,
     }}>
       <span style={{ fontWeight: 700, fontSize: "0.95rem", color }}>{value}</span>
       <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>{label}</span>

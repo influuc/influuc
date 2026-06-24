@@ -97,14 +97,14 @@ export default async function StrategyPage() {
           <Link href="/dashboard/x" style={{
             fontSize: "0.78rem", color: "var(--muted)", textDecoration: "none",
             padding: "0.4rem 0.875rem", borderRadius: 8,
-            border: "1px solid var(--border)", background: "var(--card)",
+            background: "var(--card)",
           }}>
             Review X posts →
           </Link>
           <Link href="/dashboard/linkedin" style={{
             fontSize: "0.78rem", color: "var(--muted)", textDecoration: "none",
             padding: "0.4rem 0.875rem", borderRadius: 8,
-            border: "1px solid var(--border)", background: "var(--card)",
+            background: "var(--card)",
           }}>
             Review LinkedIn →
           </Link>
@@ -115,9 +115,9 @@ export default async function StrategyPage() {
       {strat?.summary && (
         <div style={{
           padding: "1.25rem 1.5rem",
-          background: "rgba(109,107,245,0.07)",
-          border: "1px solid rgba(109,107,245,0.18)",
+          background: "rgba(109,107,245,0.1)",
           borderRadius: "var(--radius)",
+          boxShadow: "inset 3px 0 0 rgba(109,107,245,0.5)",
         }}>
           <p style={{ fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--muted-2)", margin: "0 0 0.5rem" }}>
             This week&apos;s theme
@@ -139,12 +139,12 @@ export default async function StrategyPage() {
             return (
               <div key={idea.date} style={{
                 padding: "1.25rem 1.5rem",
-                background: isPast ? "rgba(255,255,255,0.015)" : "var(--card)",
-                border: `1px solid ${isToday ? "rgba(109,107,245,0.3)" : "var(--border)"}`,
+                background: isPast ? "rgba(255,255,255,0.01)" : isToday ? "rgba(109,107,245,0.07)" : "var(--card)",
                 borderRadius: "var(--radius)",
-                opacity: isPast ? 0.55 : 1,
+                opacity: isPast ? 0.5 : 1,
                 display: "flex",
                 gap: "1.25rem",
+                boxShadow: isToday ? "inset 3px 0 0 rgba(109,107,245,0.5)" : "none",
               }}>
                 {/* Day label */}
                 <div style={{
@@ -227,10 +227,9 @@ export default async function StrategyPage() {
               return (
                 <div key={s.id} style={{
                   padding: "0.875rem 1.25rem",
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid var(--border)",
+                  background: "var(--card)",
                   borderRadius: 10,
-                  opacity: 0.6,
+                  opacity: 0.55,
                 }}>
                   <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem" }}>
                     <div>

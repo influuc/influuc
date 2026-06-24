@@ -251,6 +251,12 @@
   font-weight: 600;
 }
 
+/* Icon-only sidebar icon hover */
+.sidebar-icon-btn:hover {
+  background: rgba(255,255,255,0.07) !important;
+  color: #d4d4d8 !important;
+}
+
 /* ── Badges ────────────────────────────────────────────────────────────────── */
 
 .badge {
@@ -339,12 +345,11 @@
 /* ── Cards ─────────────────────────────────────────────────────────────────── */
 
 .card-hover {
-  transition: background 0.2s, border-color 0.2s, box-shadow 0.2s, transform 0.2s;
+  transition: background 0.2s, box-shadow 0.2s, transform 0.2s;
 }
 
 .card-hover:hover {
-  background: rgba(255,255,255,0.05) !important;
-  border-color: rgba(255,255,255,0.12) !important;
+  background: var(--card-hover) !important;
   box-shadow: 0 8px 32px rgba(0,0,0,0.4);
   transform: translateY(-1px);
 }
@@ -353,7 +358,6 @@
   background: rgba(255,255,255,0.04);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  border: 1px solid rgba(255,255,255,0.08);
   border-radius: 16px;
 }
 
@@ -383,51 +387,51 @@
   gap: 14px;
   padding: 16px 20px;
   border-radius: 12px;
-  border: 1px solid rgba(255,255,255,0.08);
-  background: rgba(255,255,255,0.03);
-  transition: all 0.2s ease;
+  background: var(--card);
+  transition: background 0.2s ease;
 }
 
 .platform-card:hover {
-  background: rgba(255,255,255,0.055);
-  border-color: rgba(255,255,255,0.14);
+  background: var(--card-hover);
 }
 
 .platform-card-connected {
-  border-color: rgba(109,107,245,0.3) !important;
-  background: rgba(109,107,245,0.06) !important;
+  background: rgba(109,107,245,0.08) !important;
+  box-shadow: inset 3px 0 0 rgba(109,107,245,0.5);
 }
 
 /* ── Post cards ────────────────────────────────────────────────────────────── */
 
 .post-card {
   background: var(--card);
-  border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 16px 18px;
-  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  transition: background 0.15s ease, box-shadow 0.15s ease;
   display: flex;
   flex-direction: column;
   gap: 14px;
 }
 
+.post-card:hover {
+  background: var(--card-hover);
+}
+
 .post-card-approved {
-  border-color: rgba(74,222,128,0.25) !important;
-  background: rgba(74,222,128,0.02) !important;
+  background: rgba(74,222,128,0.03) !important;
+  box-shadow: inset 3px 0 0 rgba(74,222,128,0.4);
 }
 
 .post-card-rejected {
-  opacity: 0.45;
-  border-color: rgba(248,113,113,0.12) !important;
+  opacity: 0.4;
 }
 
 .post-card-published {
-  border-color: rgba(109,107,245,0.25) !important;
-  background: rgba(109,107,245,0.03) !important;
+  background: rgba(109,107,245,0.04) !important;
+  box-shadow: inset 3px 0 0 rgba(109,107,245,0.4);
 }
 
 .post-card-failed {
-  border-color: rgba(251,146,60,0.25) !important;
+  box-shadow: inset 3px 0 0 rgba(251,146,60,0.5);
 }
 
 /* Post type badge */
@@ -591,22 +595,20 @@
   border-radius: var(--radius);
   text-align: left;
   align-items: center;
-  border: 1px solid var(--border);
-  background: rgba(255,255,255,0.02);
+  background: var(--card);
   cursor: pointer;
   font-family: inherit;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
   width: 100%;
 }
 
 .toggle-card:hover {
-  background: rgba(255,255,255,0.04);
-  border-color: rgba(255,255,255,0.12);
+  background: var(--card-hover);
 }
 
 .toggle-card-active {
-  border-color: rgba(109,107,245,0.3) !important;
-  background: rgba(109,107,245,0.06) !important;
+  background: rgba(109,107,245,0.1) !important;
+  box-shadow: inset 3px 0 0 rgba(109,107,245,0.6);
 }
 
 /* ── Pill buttons (settings goals / tone) ──────────────────────────────────── */
