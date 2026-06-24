@@ -13,6 +13,7 @@ interface PostCardProps {
   initialStatus: PostStatus;
   sortOrder?: number;
   scheduledDate?: string;
+  mode?: "manual" | "assisted" | "autopilot";
 }
 
 // IST posting schedule
@@ -48,6 +49,7 @@ export function PostCard({
   initialStatus,
   sortOrder,
   scheduledDate,
+  mode = "manual",
 }: PostCardProps) {
   const [status, setStatus]       = useState<PostStatus>(initialStatus);
   const [content, setContent]     = useState(initialContent);
@@ -166,6 +168,8 @@ export function PostCard({
 
       {/* ── Actions ── */}
       <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingTop: "0.125rem" }}>
+
+        {/* Terminal states (published / scheduled / failed) — same for all modes */}
         {terminal ? (
           <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", width: "100%" }}>
             {published && (
@@ -193,6 +197,8 @@ export function PostCard({
               </>
             )}
           </div>
+
+        /* Edit mode */
         ) : editing ? (
           <>
             <button className="post-btn post-btn-primary" onClick={saveEdit} disabled={isPending}>
@@ -202,6 +208,27 @@ export function PostCard({
               Cancel
             </button>
           </>
+
+        /* AUTOPILOT — no approval needed, posts go out automatically */
+        ) : mode === "autopilot" ? (
+          <>
+            <button className="post-btn post-btn-edit" onClick={() => setEditing(true)}>
+              Edit
+            </button>
+            <div style={{ flex: 1 }} />
+            <span style={{
+              fontSize: "0.72rem", color: "var(--accent-fg)", fontWeight: 500,
+              display: "flex", alignItems: "center", gap: "0.375rem",
+            }}>
+              <span style={{
+                width: 6, height: 6, borderRadius: "50%", background: "var(--accent)",
+                display: "inline-block", animation: "pulse-dot 2s ease-in-out infinite",
+              }} />
+              Auto-publishing · {time}
+            </span>
+          </>
+
+        /* MANUAL + AUTOMATIC — require approval */
         ) : (
           <>
             <button className="post-btn post-btn-edit" onClick={() => setEditing(true)}>

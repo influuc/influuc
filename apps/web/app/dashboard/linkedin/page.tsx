@@ -60,6 +60,7 @@ export default async function LinkedInSchedulePage() {
   const ideaByDate = new Map((strat.ideas ?? []).map(i => [i.date, i.theme]));
   const mode = prefs?.mode ?? "manual";
   const isAutomatic = mode === "assisted";
+  const isAutopilot = mode === "autopilot";
 
   return (
     <div style={{
@@ -82,11 +83,18 @@ export default async function LinkedInSchedulePage() {
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
           {isAutomatic && draftCount > 0 && (
-            <ApproveAllBtn
-              strategyId={strategy.id}
-              platform="linkedin"
-              draftCount={draftCount}
-            />
+            <ApproveAllBtn strategyId={strategy.id} platform="linkedin" draftCount={draftCount} />
+          )}
+          {isAutopilot && (
+            <span style={{
+              fontSize: "0.75rem", color: "var(--accent-fg)", fontWeight: 600,
+              display: "flex", alignItems: "center", gap: "0.4rem",
+              padding: "0.4rem 0.875rem", borderRadius: 999,
+              background: "rgba(109,107,245,0.1)", border: "1px solid rgba(109,107,245,0.2)",
+            }}>
+              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+              Autopilot active — posts publish automatically
+            </span>
           )}
           <div style={{
             display: "flex",
@@ -163,6 +171,7 @@ export default async function LinkedInSchedulePage() {
             postType="linkedin"
             initialStatus={post.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
             scheduledDate={post.scheduled_date}
+            mode={mode as "manual" | "assisted" | "autopilot"}
           />
         </section>
       ))}
