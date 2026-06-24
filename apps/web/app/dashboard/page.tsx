@@ -135,16 +135,11 @@ export default async function DashboardPage() {
     }))
     .sort((a, b) => a.slotOrder - b.slotOrder);
 
-  // Upcoming posts (next 7 days, not today)
-  const tomorrow = new Date();
-  tomorrow.setDate(tomorrow.getDate() + 1);
-  const in7 = new Date();
-  in7.setDate(in7.getDate() + 7);
-  const tomorrowStr = tomorrow.toISOString().slice(0, 10);
-  const in7Str = in7.toISOString().slice(0, 10);
+  // Upcoming posts — next 5 after today
+  const tomorrowStr = new Date(Date.now() + 86400000).toISOString().slice(0, 10);
 
   const upcomingPosts = posts
-    .filter(p => p.scheduled_date >= tomorrowStr && p.scheduled_date <= in7Str)
+    .filter(p => p.scheduled_date >= tomorrowStr)
     .map(p => ({
       ...p,
       time: getPostTime(p.post_type, p.sort_order ?? 0),
@@ -153,7 +148,8 @@ export default async function DashboardPage() {
     .sort((a, b) => {
       if (a.scheduled_date !== b.scheduled_date) return a.scheduled_date.localeCompare(b.scheduled_date);
       return a.slotOrder - b.slotOrder;
-    });
+    })
+    .slice(0, 5);
 
   return (
     <div style={{
@@ -319,7 +315,7 @@ export default async function DashboardPage() {
             <div>
               <p style={{ fontWeight: 700, fontSize: "0.95rem", color: "var(--fg)", margin: 0 }}>Upcoming Schedule</p>
               <p style={{ color: "var(--muted)", fontSize: "0.75rem", marginTop: "0.2rem" }}>
-                Next 7 days · {upcomingPosts.length} post{upcomingPosts.length !== 1 ? "s" : ""}
+                Next {upcomingPosts.length} post{upcomingPosts.length !== 1 ? "s" : ""}
               </p>
             </div>
             <Link href="/dashboard/x" style={{
