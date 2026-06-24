@@ -22,6 +22,8 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
   const liConn = connections["linkedin"];
   const xConnected = xConn?.status === "active";
   const liConnected = liConn?.status === "active";
+  const xNeedsReauth = xConn?.status === "needs_reauth" || xConn?.status === "revoked";
+  const liNeedsReauth = liConn?.status === "needs_reauth" || liConn?.status === "revoked";
   const bothConnected = xConnected && liConnected;
 
   async function handleContinue() {
@@ -59,16 +61,18 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
         label="X (Twitter)"
         icon={<XIcon />}
         connected={xConnected}
+        needsReauth={xNeedsReauth}
         handle={xConn?.handle ?? null}
-        connectHref="/api/oauth/x"
+        connectHref="/api/oauth/x?returnTo=/onboarding/connect"
       />
 
       <PlatformCard
         label="LinkedIn"
         icon={<LinkedInIcon />}
         connected={liConnected}
+        needsReauth={liNeedsReauth}
         handle={liConn?.handle ?? null}
-        connectHref="/api/oauth/linkedin"
+        connectHref="/api/oauth/linkedin?returnTo=/onboarding/connect"
       />
 
       {!bothConnected && (
@@ -94,28 +98,32 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
 }
 
 function PlatformCard({
-  label, icon, connected, handle, connectHref,
+  label, icon, connected, needsReauth, handle, connectHref,
 }: {
   label: string;
   icon: React.ReactNode;
   connected: boolean;
+  needsReauth: boolean;
   handle: string | null;
   connectHref: string;
 }) {
   return (
-    <div className={`platform-card ${connected ? "platform-card-connected" : ""}`}>
+    <div className={`platform-card ${connected ? "platform-card-connected" : ""}`} style={needsReauth ? { borderColor: "rgba(248,113,113,0.3)" } : undefined}>
       <span style={{ flexShrink: 0, opacity: connected ? 1 : 0.55 }}>{icon}</span>
       <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
         <span style={{ fontWeight: 600, fontSize: "0.925rem" }}>{label}</span>
         {connected && handle ? (
           <span style={{ fontSize: "0.78rem", color: "#a5b4fc" }}>{handle}</span>
+        ) : needsReauth ? (
+          <span style={{ fontSize: "0.78rem", color: "#f87171" }}>Token expired — re-auth needed</span>
         ) : (
           <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)" }}>Not connected</span>
         )}
       </div>
       {connected && <div className="glow-dot glow-dot-success" />}
+      {needsReauth && <div className="glow-dot" style={{ background: "#f87171", boxShadow: "0 0 6px #f87171" }} />}
       <a href={connectHref} className="btn btn-xs btn-ghost" style={{ flexShrink: 0 }}>
-        {connected ? "Re-connect" : "Connect"}
+        {connected ? "Re-connect" : needsReauth ? "Re-auth" : "Connect"}
       </a>
     </div>
   );

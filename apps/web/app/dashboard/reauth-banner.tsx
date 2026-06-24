@@ -5,7 +5,7 @@ interface Props {
 }
 
 const PLATFORM_LABELS: Record<string, string> = { x: "X", linkedin: "LinkedIn" };
-const OAUTH_URLS: Record<string, string> = { x: "/api/oauth/x", linkedin: "/api/oauth/linkedin" };
+const OAUTH_URLS: Record<string, string> = { x: "/api/oauth/x?returnTo=/dashboard", linkedin: "/api/oauth/linkedin?returnTo=/dashboard" };
 
 export async function ReauthBanner({ founderId }: Props) {
   const db = createServiceClient();
