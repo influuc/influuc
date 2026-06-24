@@ -28,3 +28,18 @@ export async function updatePostContent(postId: string, content: string) {
   revalidatePath("/dashboard/x");
   revalidatePath("/dashboard/linkedin");
 }
+
+export async function approveAllPosts(strategyId: string, platform: "x" | "linkedin") {
+  const founder = await getCurrentFounder();
+  const db = createServiceClient();
+  await db
+    .from("weekly_posts")
+    .update({ status: "approved", updated_at: new Date().toISOString() })
+    .eq("founder_id", founder.id)
+    .eq("strategy_id", strategyId)
+    .eq("platform", platform)
+    .in("status", ["draft", "rejected"]);
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/x");
+  revalidatePath("/dashboard/linkedin");
+}

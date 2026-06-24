@@ -2,6 +2,7 @@ import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { PostCard } from "../post-card";
+import { ApproveAllBtn } from "../approve-all-btn";
 
 export default async function LinkedInSchedulePage() {
   let founder;
@@ -17,13 +18,20 @@ export default async function LinkedInSchedulePage() {
 
   const db = createServiceClient();
 
-  const { data: strategy } = await db
-    .from("weekly_strategies")
-    .select("id, week_start, strategy")
-    .eq("founder_id", founder.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  const [{ data: strategy }, { data: prefs }] = await Promise.all([
+    db
+      .from("weekly_strategies")
+      .select("id, week_start, strategy")
+      .eq("founder_id", founder.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
+    db
+      .from("operating_preferences")
+      .select("mode")
+      .eq("founder_id", founder.id)
+      .single(),
+  ]);
 
   if (!strategy) {
     return (
@@ -43,11 +51,15 @@ export default async function LinkedInSchedulePage() {
     .eq("platform", "linkedin")
     .order("scheduled_date");
 
-  const approved = (posts ?? []).filter(p => p.status === "approved" || p.status === "published").length;
-  const total = (posts ?? []).length;
+  const allPosts = posts ?? [];
+  const approved = allPosts.filter(p => p.status === "approved" || p.status === "published").length;
+  const draftCount = allPosts.filter(p => p.status === "draft").length;
+  const total = allPosts.length;
 
   const strat = strategy.strategy as { summary?: string; ideas?: Array<{ date: string; theme: string }> };
   const ideaByDate = new Map((strat.ideas ?? []).map(i => [i.date, i.theme]));
+  const mode = prefs?.mode ?? "manual";
+  const isAutomatic = mode === "assisted";
 
   return (
     <div style={{
@@ -68,25 +80,58 @@ export default async function LinkedInSchedulePage() {
             {strat.summary && <> · <span style={{ fontStyle: "italic" }}>{strat.summary}</span></>}
           </p>
         </div>
-        <div style={{
-          display: "flex",
-          alignItems: "center",
-          gap: "0.625rem",
-          padding: "0.4rem 0.875rem",
-          borderRadius: 999,
-          background: approved === total && total > 0 ? "var(--success-bg)" : "var(--card)",
-          border: `1px solid ${approved === total && total > 0 ? "rgba(74,222,128,0.2)" : "var(--border)"}`,
-          flexShrink: 0,
-        }}>
-          <span style={{ fontSize: "0.8rem", fontWeight: 600, color: approved === total && total > 0 ? "var(--success)" : "var(--fg)" }}>
-            {approved}/{total}
-          </span>
-          <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>approved</span>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+          {isAutomatic && draftCount > 0 && (
+            <ApproveAllBtn
+              strategyId={strategy.id}
+              platform="linkedin"
+              draftCount={draftCount}
+            />
+          )}
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.625rem",
+            padding: "0.4rem 0.875rem",
+            borderRadius: 999,
+            background: approved === total && total > 0 ? "var(--success-bg)" : "var(--card)",
+            border: `1px solid ${approved === total && total > 0 ? "rgba(74,222,128,0.2)" : "var(--border)"}`,
+          }}>
+            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: approved === total && total > 0 ? "var(--success)" : "var(--fg)" }}>
+              {approved}/{total}
+            </span>
+            <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>approved</span>
+            {approved === total && total > 0 && <span style={{ fontSize: "0.75rem", color: "var(--success)" }}>✓</span>}
+          </div>
         </div>
       </div>
 
+      {/* Schedule info banner */}
+      <div style={{
+        padding: "0.75rem 1rem",
+        borderRadius: 10,
+        background: "rgba(109,107,245,0.06)",
+        border: "1px solid rgba(109,107,245,0.12)",
+        display: "flex",
+        alignItems: "center",
+        gap: "0.625rem",
+      }}>
+        <span style={{
+          fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.06em",
+          textTransform: "uppercase", color: "var(--muted-2)",
+          padding: "2px 6px", borderRadius: 4,
+          background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+        }}>
+          1 per day
+        </span>
+        <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--accent-fg)" }}>10:00 AM</span>
+        <span style={{ fontSize: "0.75rem", color: "var(--muted-2)", marginLeft: "auto" }}>
+          Daily posting schedule
+        </span>
+      </div>
+
       {/* Posts */}
-      {(posts ?? []).map(post => (
+      {allPosts.map(post => (
         <section key={post.id} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
           <div style={{
             display: "flex",
@@ -117,6 +162,7 @@ export default async function LinkedInSchedulePage() {
             content={post.content}
             postType="linkedin"
             initialStatus={post.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
+            scheduledDate={post.scheduled_date}
           />
         </section>
       ))}

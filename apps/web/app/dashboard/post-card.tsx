@@ -12,9 +12,27 @@ interface PostCardProps {
   postType: PostType;
   initialStatus: PostStatus;
   sortOrder?: number;
+  scheduledDate?: string;
 }
 
-export function PostCard({ id, content: initialContent, postType, initialStatus, sortOrder }: PostCardProps) {
+function getPostTime(postType: PostType, sortOrder?: number): string {
+  if (postType === "linkedin") return "10:00 AM";
+  if (postType === "x_long") return "6:00 PM";
+  // x_short: slot 0 = 9am, slot 1 = 12pm
+  return (sortOrder ?? 0) === 0 ? "9:00 AM" : "12:00 PM";
+}
+
+function fmtScheduledDate(dateStr: string): string {
+  const d = new Date(dateStr + "T00:00:00Z");
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const diff = d.getTime() - today.getTime();
+  if (diff >= 0 && diff < 86400000) return "Today";
+  if (diff >= 86400000 && diff < 172800000) return "Tomorrow";
+  return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
+}
+
+export function PostCard({ id, content: initialContent, postType, initialStatus, sortOrder, scheduledDate }: PostCardProps) {
   const [status, setStatus] = useState<PostStatus>(initialStatus);
   const [content, setContent] = useState(initialContent);
   const [editing, setEditing] = useState(false);
@@ -32,6 +50,8 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
   const scheduled = status === "scheduled";
   const failed    = status === "failed";
   const terminal  = published || scheduled || failed;
+
+  const scheduledTime = getPostTime(postType, sortOrder);
 
   function setStatusOpt(next: "approved" | "rejected" | "draft") {
     setStatus(next);
@@ -70,7 +90,7 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
 
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
           <TypeBadge label={typeLabel} />
           {isShort && (
             <span style={{
@@ -88,6 +108,18 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
               fontVariantNumeric: "tabular-nums",
             }}>
               {charCount} chars
+            </span>
+          )}
+          {scheduledDate && (
+            <span style={{
+              fontSize: "0.68rem",
+              color: "var(--muted-2)",
+              display: "flex",
+              alignItems: "center",
+              gap: "0.25rem",
+            }}>
+              <span style={{ opacity: 0.5 }}>·</span>
+              {fmtScheduledDate(scheduledDate)} at {scheduledTime}
             </span>
           )}
         </div>
@@ -144,7 +176,7 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
             )}
             {scheduled && (
               <span style={{ fontSize: "0.75rem", color: "var(--muted)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                <Dot color="var(--muted)" /> Queued
+                <Dot color="var(--muted)" /> Queued for {scheduledTime}
               </span>
             )}
             {failed && (
@@ -254,11 +286,11 @@ function ActionBtn({ variant, onClick, disabled, children }: {
   children: React.ReactNode;
 }) {
   const styles: Record<string, React.CSSProperties> = {
-    primary:       { background: "var(--accent)",    color: "#fff",              border: "none" },
-    ghost:         { background: "transparent",       color: "var(--muted)",      border: "1px solid var(--border)" },
-    success:       { background: "var(--success-bg)", color: "var(--success)",    border: "1px solid rgba(74,222,128,0.2)" },
-    "success-solid": { background: "var(--success-bg)", color: "var(--success)", border: "1px solid rgba(74,222,128,0.2)" },
-    danger:        { background: "var(--error-bg)",   color: "var(--error)",      border: "1px solid rgba(248,113,113,0.15)" },
+    primary:         { background: "var(--accent)",    color: "#fff",              border: "none" },
+    ghost:           { background: "transparent",       color: "var(--muted)",      border: "1px solid var(--border)" },
+    success:         { background: "var(--success-bg)", color: "var(--success)",    border: "1px solid rgba(74,222,128,0.2)" },
+    "success-solid": { background: "var(--success-bg)", color: "var(--success)",    border: "1px solid rgba(74,222,128,0.2)" },
+    danger:          { background: "var(--error-bg)",   color: "var(--error)",      border: "1px solid rgba(248,113,113,0.15)" },
   };
   return (
     <button

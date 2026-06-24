@@ -4,6 +4,21 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ReflectionBanner } from "./reflection-banner";
 import { ReauthBanner } from "./reauth-banner";
+import { GeneratingPoller } from "./generating-poller";
+
+function getPostTime(postType: string, sortOrder: number): string {
+  if (postType === "linkedin") return "10:00 AM";
+  if (postType === "x_long") return "6:00 PM";
+  return sortOrder === 0 ? "9:00 AM" : "12:00 PM";
+}
+
+function getPostSlotOrder(postType: string, sortOrder: number): number {
+  if (postType === "x_short" && sortOrder === 0) return 0; // 9am
+  if (postType === "linkedin") return 1;                    // 10am
+  if (postType === "x_short" && sortOrder === 1) return 2; // 12pm
+  if (postType === "x_long") return 3;                     // 6pm
+  return 99;
+}
 
 export default async function DashboardPage() {
   let founder;
@@ -26,32 +41,116 @@ export default async function DashboardPage() {
     db.from("weekly_strategies").select("id, week_start, strategy").eq("founder_id", founder.id).order("created_at", { ascending: false }).limit(1).single(),
   ]);
 
-  let xStats = { total: 0, approved: 0, published: 0 };
-  let liStats = { total: 0, approved: 0, published: 0 };
+  const mode = prefs?.mode ?? "assisted";
+  const modeLabel = mode === "assisted" ? "Automatic" : mode === "autopilot" ? "Autopilot" : "Manual";
+  const firstName = founder.display_name?.split(" ")[0] ?? "there";
+  const strat = strategy?.strategy as { summary?: string } | undefined;
 
-  if (strategy) {
-    const { data: posts } = await db
-      .from("weekly_posts")
-      .select("platform, status")
-      .eq("founder_id", founder.id)
-      .eq("strategy_id", strategy.id);
+  // Generating state — no strategy yet
+  if (!strategy) {
+    return (
+      <div style={{ padding: "2rem 2.5rem 4rem", maxWidth: 1000, margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <ReauthBanner founderId={founder.id} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.025em", color: "var(--fg)" }}>
+              Welcome, {firstName}
+            </h1>
+            <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.25rem" }}>
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            </p>
+          </div>
+        </div>
+        <GeneratingPoller />
+      </div>
+    );
+  }
 
-    for (const p of posts ?? []) {
-      if (p.platform === "x") {
-        xStats.total++;
-        if (p.status === "approved") xStats.approved++;
-        if (p.status === "published") xStats.published++;
-      } else {
-        liStats.total++;
-        if (p.status === "approved") liStats.approved++;
-        if (p.status === "published") liStats.published++;
-      }
+  // Get all posts for this week's strategy
+  const { data: allPosts } = await db
+    .from("weekly_posts")
+    .select("id, platform, status, scheduled_date, post_type, sort_order, content")
+    .eq("founder_id", founder.id)
+    .eq("strategy_id", strategy.id)
+    .order("scheduled_date")
+    .order("sort_order");
+
+  const posts = allPosts ?? [];
+
+  // If strategy exists but posts haven't generated yet
+  if (posts.length === 0) {
+    return (
+      <div style={{ padding: "2rem 2.5rem 4rem", maxWidth: 1000, margin: "0 auto", width: "100%", display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        <ReauthBanner founderId={founder.id} />
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
+          <div>
+            <h1 style={{ fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.025em", color: "var(--fg)" }}>
+              Welcome, {firstName}
+            </h1>
+            <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.25rem" }}>
+              {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
+            </p>
+          </div>
+        </div>
+        <GeneratingPoller />
+      </div>
+    );
+  }
+
+  // Stats
+  let xStats = { total: 0, approved: 0, published: 0, draft: 0 };
+  let liStats = { total: 0, approved: 0, published: 0, draft: 0 };
+  for (const p of posts) {
+    if (p.platform === "x") {
+      xStats.total++;
+      if (p.status === "approved") xStats.approved++;
+      if (p.status === "published") xStats.published++;
+      if (p.status === "draft") xStats.draft++;
+    } else {
+      liStats.total++;
+      if (p.status === "approved") liStats.approved++;
+      if (p.status === "published") liStats.published++;
+      if (p.status === "draft") liStats.draft++;
     }
   }
 
-  const strat = strategy?.strategy as { summary?: string } | undefined;
-  const firstName = founder.display_name?.split(" ")[0] ?? "there";
-  const mode = prefs?.mode ?? "assisted";
+  // Find next post to go out (approved, future/today, not yet published)
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const nowHour = new Date().getHours() + new Date().getMinutes() / 60;
+
+  const timeToHour: Record<string, number> = { "9:00 AM": 9, "10:00 AM": 10, "12:00 PM": 12, "6:00 PM": 18 };
+
+  const upcomingApproved = posts
+    .filter(p => (p.status === "approved" || (mode === "autopilot" && p.status === "draft")) && p.scheduled_date >= todayStr)
+    .map(p => ({
+      ...p,
+      time: getPostTime(p.post_type, p.sort_order ?? 0),
+      slotOrder: getPostSlotOrder(p.post_type, p.sort_order ?? 0),
+    }))
+    .filter(p => {
+      // For today, only show slots that haven't passed yet
+      if (p.scheduled_date === todayStr) {
+        return (timeToHour[p.time] ?? 0) > nowHour;
+      }
+      return true;
+    })
+    .sort((a, b) => {
+      if (a.scheduled_date !== b.scheduled_date) return a.scheduled_date.localeCompare(b.scheduled_date);
+      return a.slotOrder - b.slotOrder;
+    });
+
+  const nextPost = upcomingApproved[0] ?? null;
+  const nextPostLabel = nextPost ? (() => {
+    const d = nextPost.scheduled_date;
+    if (d === todayStr) return `Today at ${nextPost.time}`;
+    const tomorrow = new Date(); tomorrow.setDate(tomorrow.getDate() + 1);
+    const tmrStr = tomorrow.toISOString().slice(0, 10);
+    if (d === tmrStr) return `Tomorrow at ${nextPost.time}`;
+    return `${new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" })} at ${nextPost.time}`;
+  })() : null;
+
+  const platformLabel = nextPost?.platform === "x" ? "X" : "LinkedIn";
+  const postTypeLabel = nextPost?.post_type === "x_short" ? "Short" : nextPost?.post_type === "x_long" ? "Thread" : "Article";
 
   return (
     <div style={{
@@ -77,8 +176,82 @@ export default async function DashboardPage() {
             {new Date().toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}
           </p>
         </div>
-        <ModeBadge mode={mode} />
+        <ModeBadge mode={modeLabel} />
       </div>
+
+      {/* Next Post — most important thing */}
+      {nextPost ? (
+        <div style={{
+          background: "rgba(109,107,245,0.07)",
+          border: "1px solid rgba(109,107,245,0.18)",
+          borderRadius: "var(--radius)",
+          padding: "1.25rem 1.5rem",
+          display: "flex",
+          gap: "1.25rem",
+          alignItems: "flex-start",
+        }}>
+          <div style={{
+            width: 38, height: 38, borderRadius: 10, flexShrink: 0,
+            background: "rgba(109,107,245,0.2)",
+            border: "1px solid rgba(109,107,245,0.3)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+          }}>
+            <span style={{ fontSize: "0.9rem" }}>{nextPost.platform === "x" ? "𝕏" : "in"}</span>
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", marginBottom: "0.5rem", flexWrap: "wrap" }}>
+              <Label>Next post</Label>
+              <span style={{
+                fontSize: "0.72rem", fontWeight: 700, color: "#a5b4fc",
+                padding: "2px 8px", borderRadius: 999,
+                background: "rgba(109,107,245,0.15)",
+                border: "1px solid rgba(109,107,245,0.25)",
+              }}>
+                {nextPostLabel}
+              </span>
+              <span style={{ fontSize: "0.7rem", color: "var(--muted-2)" }}>
+                {platformLabel} · {postTypeLabel}
+              </span>
+            </div>
+            <p style={{
+              fontSize: "0.875rem", color: "var(--fg)", lineHeight: 1.6, margin: 0,
+              display: "-webkit-box", WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical", overflow: "hidden",
+            }}>
+              {nextPost.content}
+            </p>
+          </div>
+          <Link
+            href={`/dashboard/${nextPost.platform === "x" ? "x" : "linkedin"}`}
+            style={{
+              padding: "0.45rem 0.875rem", borderRadius: 8,
+              background: "rgba(255,255,255,0.06)", border: "1px solid rgba(255,255,255,0.1)",
+              color: "var(--muted)", fontSize: "0.78rem", fontWeight: 500,
+              textDecoration: "none", whiteSpace: "nowrap", flexShrink: 0,
+            }}
+          >
+            View →
+          </Link>
+        </div>
+      ) : (
+        <div style={{
+          padding: "1rem 1.25rem",
+          borderRadius: "var(--radius)",
+          background: "var(--card)",
+          border: "1px solid var(--border)",
+          display: "flex",
+          alignItems: "center",
+          gap: "0.75rem",
+        }}>
+          <span style={{ fontSize: "1rem" }}>📋</span>
+          <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--muted)", lineHeight: 1.5 }}>
+            No approved posts scheduled yet.{" "}
+            <Link href="/dashboard/x" style={{ color: "var(--accent-fg)", textDecoration: "none" }}>
+              Review and approve your X posts →
+            </Link>
+          </p>
+        </div>
+      )}
 
       {/* Strategy card — full width */}
       {strategy && (
@@ -91,8 +264,8 @@ export default async function DashboardPage() {
               </p>
             </div>
             <div style={{ display: "flex", gap: "0.625rem", flexShrink: 0 }}>
-              <StatPill value={`${xStats.approved + liStats.approved}`} label="approved" color="var(--accent-fg)" />
-              <StatPill value={`${xStats.published + liStats.published}`} label="published" color="var(--success)" />
+              <StatPill value={`${xStats.approved + liStats.approved + xStats.published + liStats.published}`} label="approved" color="var(--success)" />
+              <StatPill value={`${xStats.published + liStats.published}`} label="live" color="var(--accent-fg)" />
             </div>
           </div>
         </Card>
@@ -103,20 +276,35 @@ export default async function DashboardPage() {
         <PlatformCard
           href="/dashboard/x"
           title="X Posts"
-          meta="3 per day · 21 total"
+          meta={`3 per day · ${xStats.total} total`}
           icon={<XIcon />}
-          approved={xStats.approved}
+          approved={xStats.approved + xStats.published}
           published={xStats.published}
+          draft={xStats.draft}
           total={xStats.total}
+          nextTime={
+            posts.find(p => p.platform === "x" && p.status === "approved" && p.scheduled_date >= todayStr)
+              ? getPostTime(
+                  posts.find(p => p.platform === "x" && (p.status === "approved") && p.scheduled_date >= todayStr)!.post_type,
+                  posts.find(p => p.platform === "x" && (p.status === "approved") && p.scheduled_date >= todayStr)!.sort_order ?? 0,
+                )
+              : null
+          }
         />
         <PlatformCard
           href="/dashboard/linkedin"
           title="LinkedIn"
-          meta="1 per day · 7 total"
+          meta={`1 per day · ${liStats.total} total`}
           icon={<LinkedInIcon />}
-          approved={liStats.approved}
+          approved={liStats.approved + liStats.published}
           published={liStats.published}
+          draft={liStats.draft}
           total={liStats.total}
+          nextTime={
+            posts.find(p => p.platform === "linkedin" && p.status === "approved" && p.scheduled_date >= todayStr)
+              ? "10:00 AM"
+              : null
+          }
         />
       </div>
 
@@ -126,7 +314,7 @@ export default async function DashboardPage() {
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
             <div>
               <Label>Founder Brain</Label>
-              <p style={{ fontWeight: 600, fontSize: "0.95rem", marginTop: "0.375rem", color: "var(--fg)" }}>
+              <p style={{ fontWeight: 700, fontSize: "1.05rem", marginTop: "0.375rem", color: "var(--fg)" }}>
                 {factCount ?? 0} active facts
               </p>
               <p style={{ color: "var(--muted)", fontSize: "0.8rem", marginTop: "0.2rem" }}>
@@ -165,8 +353,8 @@ export default async function DashboardPage() {
             cursor: "pointer",
           }}>
             <Label>Mode</Label>
-            <p style={{ fontWeight: 700, fontSize: "1rem", color: "var(--fg)", textTransform: "capitalize", marginTop: "0.375rem" }}>
-              {mode}
+            <p style={{ fontWeight: 700, fontSize: "1rem", color: "var(--fg)", marginTop: "0.375rem" }}>
+              {modeLabel}
             </p>
             <p style={{ color: "var(--accent-fg)", fontSize: "0.75rem", marginTop: "0.125rem" }}>Change →</p>
           </div>
@@ -240,12 +428,13 @@ function ModeBadge({ mode }: { mode: string }) {
   );
 }
 
-function PlatformCard({ href, title, meta, icon, approved, published, total }: {
+function PlatformCard({ href, title, meta, icon, approved, published, draft, total, nextTime }: {
   href: string; title: string; meta: string; icon: React.ReactNode;
-  approved: number; published: number; total: number;
+  approved: number; published: number; draft: number; total: number;
+  nextTime: string | null;
 }) {
-  const pct = total > 0 ? Math.round(((approved + published) / total) * 100) : 0;
-  const allDone = total > 0 && pct === 100;
+  const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
+  const allDone = total > 0 && approved >= total;
 
   return (
     <Link href={href} style={{ textDecoration: "none" }}>
@@ -256,9 +445,10 @@ function PlatformCard({ href, title, meta, icon, approved, published, total }: {
         padding: "1.25rem 1.5rem",
         display: "flex",
         flexDirection: "column",
-        gap: "1.25rem",
+        gap: "1rem",
         cursor: "pointer",
         transition: "border-color 0.15s, background 0.15s",
+        height: "100%",
       }}>
         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start" }}>
           <div>
@@ -283,12 +473,22 @@ function PlatformCard({ href, title, meta, icon, approved, published, total }: {
             </div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <span style={{ fontSize: "0.75rem", color: allDone ? "var(--success)" : "var(--muted)" }}>
-                {approved + published}/{total} ready
+                {approved}/{total} approved
               </span>
-              {published > 0 && (
-                <span style={{ fontSize: "0.7rem", color: "var(--muted-2)" }}>{published} live</span>
+              {draft > 0 && (
+                <span style={{ fontSize: "0.7rem", color: "var(--warning)", fontWeight: 500 }}>
+                  {draft} need review
+                </span>
               )}
             </div>
+            {nextTime && (
+              <div style={{ display: "flex", alignItems: "center", gap: "0.375rem" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", flexShrink: 0 }} />
+                <span style={{ fontSize: "0.72rem", color: "var(--accent-fg)", fontWeight: 500 }}>
+                  Next post at {nextTime}
+                </span>
+              </div>
+            )}
           </div>
         )}
       </div>

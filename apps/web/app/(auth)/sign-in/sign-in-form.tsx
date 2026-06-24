@@ -170,4 +170,5 @@ const cardStyle: React.CSSProperties = {
   alignItems: "center",
   width: "100%",
   maxWidth: "400px",
+  margin: "0 auto",
 };

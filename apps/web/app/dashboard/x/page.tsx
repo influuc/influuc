@@ -2,6 +2,7 @@ import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { PostCard } from "../post-card";
+import { ApproveAllBtn } from "../approve-all-btn";
 
 export default async function XSchedulePage() {
   let founder;
@@ -17,18 +18,23 @@ export default async function XSchedulePage() {
 
   const db = createServiceClient();
 
-  const { data: strategy } = await db
-    .from("weekly_strategies")
-    .select("id, week_start, strategy")
-    .eq("founder_id", founder.id)
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .single();
+  const [{ data: strategy }, { data: prefs }] = await Promise.all([
+    db
+      .from("weekly_strategies")
+      .select("id, week_start, strategy")
+      .eq("founder_id", founder.id)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .single(),
+    db
+      .from("operating_preferences")
+      .select("mode")
+      .eq("founder_id", founder.id)
+      .single(),
+  ]);
 
   if (!strategy) {
-    return (
-      <EmptyState message="No content generated yet. Complete onboarding to generate your first week." />
-    );
+    return <EmptyState message="No content generated yet. Complete onboarding to generate your first week." />;
   }
 
   const { data: posts } = await db
@@ -40,12 +46,16 @@ export default async function XSchedulePage() {
     .order("scheduled_date")
     .order("sort_order");
 
-  const byDay = groupByDay(posts ?? []);
-  const approved = (posts ?? []).filter(p => p.status === "approved" || p.status === "published").length;
-  const total = (posts ?? []).length;
+  const allPosts = posts ?? [];
+  const byDay = groupByDay(allPosts);
+  const approved = allPosts.filter(p => p.status === "approved" || p.status === "published").length;
+  const draftCount = allPosts.filter(p => p.status === "draft").length;
+  const total = allPosts.length;
   const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
 
   const strat = strategy.strategy as { summary?: string };
+  const mode = prefs?.mode ?? "manual";
+  const isAutomatic = mode === "assisted";
 
   return (
     <div style={{
@@ -67,8 +77,36 @@ export default async function XSchedulePage() {
           </p>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+          {isAutomatic && draftCount > 0 && (
+            <ApproveAllBtn
+              strategyId={strategy.id}
+              platform="x"
+              draftCount={draftCount}
+            />
+          )}
           <ProgressPill approved={approved} total={total} pct={pct} />
         </div>
+      </div>
+
+      {/* Schedule info banner */}
+      <div style={{
+        padding: "0.75rem 1rem",
+        borderRadius: 10,
+        background: "rgba(109,107,245,0.06)",
+        border: "1px solid rgba(109,107,245,0.12)",
+        display: "flex",
+        alignItems: "center",
+        gap: "1.5rem",
+        flexWrap: "wrap",
+      }}>
+        <TimeSlot label="Short 1" time="9:00 AM" />
+        <Divider />
+        <TimeSlot label="Short 2" time="12:00 PM" />
+        <Divider />
+        <TimeSlot label="Long" time="6:00 PM" />
+        <span style={{ fontSize: "0.75rem", color: "var(--muted-2)", marginLeft: "auto" }}>
+          Daily posting schedule
+        </span>
       </div>
 
       {/* Days */}
@@ -93,7 +131,6 @@ export default async function XSchedulePage() {
             </h2>
           </div>
 
-          {/* Short posts — 2 col */}
           {shorts.length > 0 && (
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
               {shorts.map(p => (
@@ -104,12 +141,12 @@ export default async function XSchedulePage() {
                   postType="x_short"
                   initialStatus={p.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
                   sortOrder={p.sort_order}
+                  scheduledDate={p.scheduled_date}
                 />
               ))}
             </div>
           )}
 
-          {/* Long post — full width */}
           {longs.map(p => (
             <PostCard
               key={p.id}
@@ -117,12 +154,36 @@ export default async function XSchedulePage() {
               content={p.content}
               postType="x_long"
               initialStatus={p.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
+              sortOrder={p.sort_order}
+              scheduledDate={p.scheduled_date}
             />
           ))}
         </section>
       ))}
     </div>
   );
+}
+
+function TimeSlot({ label, time }: { label: string; time: string }) {
+  return (
+    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      <span style={{
+        fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.06em",
+        textTransform: "uppercase", color: "var(--muted-2)",
+        padding: "2px 6px", borderRadius: 4,
+        background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+      }}>
+        {label}
+      </span>
+      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--accent-fg)", fontVariantNumeric: "tabular-nums" }}>
+        {time}
+      </span>
+    </div>
+  );
+}
+
+function Divider() {
+  return <span style={{ width: 1, height: 16, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />;
 }
 
 function ProgressPill({ approved, total, pct }: { approved: number; total: number; pct: number }) {

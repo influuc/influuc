@@ -20,9 +20,9 @@ const TONE_OPTIONS = [
 ];
 
 const AUTONOMY_MODES = [
-  { id: "manual",    label: "Manual",    description: "You review and approve every post before anything goes out." },
-  { id: "assisted",  label: "Assisted",  description: "High-confidence posts queue for your approval. ~10 min/week.", recommended: true },
-  { id: "autopilot", label: "Autopilot", description: "Posts publish automatically within daily caps you control." },
+  { id: "manual",    label: "Manual",    description: "You review and approve every post individually. Nothing goes out without your explicit tap." },
+  { id: "assisted",  label: "Automatic", description: "Approve your whole week with one click. Posts won't publish until you give the green light.", recommended: true },
+  { id: "autopilot", label: "Autopilot", description: "Posts publish automatically on schedule. Zero clicks, zero friction — you set the limits." },
 ] as const;
 
 export interface SettingsFormProps {
