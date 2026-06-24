@@ -36,10 +36,12 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const returnTo = new URL(request.url).searchParams.get("returnTo") ?? "/onboarding/connect";
+
   const response = NextResponse.redirect(authUrl);
   response.cookies.set(
     "li_oauth_state",
-    JSON.stringify({ state, founderId: founder.id }),
+    JSON.stringify({ state, founderId: founder.id, returnTo }),
     {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",

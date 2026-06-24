@@ -38,9 +38,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
+  const returnTo = new URL(request.url).searchParams.get("returnTo") ?? "/onboarding/connect";
+
   const response = NextResponse.redirect(authUrl);
   // Short-lived state cookie — read back in /api/oauth/x/callback
-  response.cookies.set("x_oauth_state", JSON.stringify({ state, codeVerifier, founderId: founder.id }), {
+  response.cookies.set("x_oauth_state", JSON.stringify({ state, codeVerifier, founderId: founder.id, returnTo }), {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
     sameSite: "lax",

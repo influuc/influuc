@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(`${origin}/onboarding/connect?error=state_missing`);
   }
 
-  let savedState: { state: string; codeVerifier: string; founderId: string };
+  let savedState: { state: string; codeVerifier: string; founderId: string; returnTo?: string };
   try {
     savedState = JSON.parse(rawState);
   } catch {
@@ -117,8 +117,8 @@ export async function GET(request: NextRequest) {
       { onConflict: "founder_id,platform" }
     );
 
-    // Redirect back to connect so user can also connect LinkedIn
-    const response = NextResponse.redirect(`${origin}/onboarding/connect`);
+    const returnTo = savedState.returnTo ?? "/onboarding/connect";
+    const response = NextResponse.redirect(`${origin}${returnTo}`);
     response.cookies.delete("x_oauth_state");
     return response;
   } catch (err) {

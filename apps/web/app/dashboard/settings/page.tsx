@@ -6,7 +6,10 @@ import { RegenerateWeekBtn } from "./regenerate-week-btn";
 
 const PLATFORM_LABELS: Record<string, string> = { x: "X (Twitter)", linkedin: "LinkedIn" };
 const PLATFORM_ICONS: Record<string, string> = { x: "𝕏", linkedin: "in" };
-const CONNECT_URLS: Record<string, string> = { x: "/api/oauth/x", linkedin: "/api/oauth/linkedin" };
+const CONNECT_URLS: Record<string, string> = {
+  x: "/api/oauth/x?returnTo=/dashboard/settings",
+  linkedin: "/api/oauth/linkedin?returnTo=/dashboard/settings",
+};
 
 export default async function SettingsPage() {
   let founder;
