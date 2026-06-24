@@ -7,9 +7,9 @@ import { ReauthBanner } from "./reauth-banner";
 import { GeneratingPoller } from "./generating-poller";
 
 function getPostTime(postType: string, sortOrder: number): string {
-  if (postType === "linkedin") return "10:00 AM";
-  if (postType === "x_long") return "6:00 PM";
-  return sortOrder === 0 ? "9:00 AM" : "12:00 PM";
+  if (postType === "linkedin") return "9:30 AM IST";
+  if (postType === "x_long")   return "7:00 PM IST";
+  return sortOrder === 0 ? "9:00 AM IST" : "1:00 PM IST";
 }
 
 function getPostSlotOrder(postType: string, sortOrder: number): number {
@@ -118,7 +118,7 @@ export default async function DashboardPage() {
   const todayStr = new Date().toISOString().slice(0, 10);
   const nowHour = new Date().getHours() + new Date().getMinutes() / 60;
 
-  const timeToHour: Record<string, number> = { "9:00 AM": 9, "10:00 AM": 10, "12:00 PM": 12, "6:00 PM": 18 };
+  const timeToHour: Record<string, number> = { "9:00 AM IST": 9, "9:30 AM IST": 9.5, "1:00 PM IST": 13, "7:00 PM IST": 19 };
 
   const upcomingApproved = posts
     .filter(p => (p.status === "approved" || (mode === "autopilot" && p.status === "draft")) && p.scheduled_date >= todayStr)
@@ -302,7 +302,7 @@ export default async function DashboardPage() {
           total={liStats.total}
           nextTime={
             posts.find(p => p.platform === "linkedin" && p.status === "approved" && p.scheduled_date >= todayStr)
-              ? "10:00 AM"
+              ? "9:30 AM IST"
               : null
           }
         />

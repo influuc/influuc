@@ -99,11 +99,11 @@ export default async function XSchedulePage() {
         gap: "1.5rem",
         flexWrap: "wrap",
       }}>
-        <TimeSlot label="Short 1" time="9:00 AM" />
+        <TimeSlot label="Short 1" time="9:00 AM IST" />
         <Divider />
-        <TimeSlot label="Short 2" time="12:00 PM" />
+        <TimeSlot label="Short 2" time="1:00 PM IST" />
         <Divider />
-        <TimeSlot label="Long" time="6:00 PM" />
+        <TimeSlot label="Long" time="7:00 PM IST" />
         <span style={{ fontSize: "0.75rem", color: "var(--muted-2)", marginLeft: "auto" }}>
           Daily posting schedule
         </span>

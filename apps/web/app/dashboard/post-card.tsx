@@ -15,11 +15,11 @@ interface PostCardProps {
   scheduledDate?: string;
 }
 
+// IST posting schedule
 function getPostTime(postType: PostType, sortOrder?: number): string {
-  if (postType === "linkedin") return "10:00 AM";
-  if (postType === "x_long") return "6:00 PM";
-  // x_short: slot 0 = 9am, slot 1 = 12pm
-  return (sortOrder ?? 0) === 0 ? "9:00 AM" : "12:00 PM";
+  if (postType === "linkedin") return "9:30 AM IST";
+  if (postType === "x_long")   return "7:00 PM IST";
+  return (sortOrder ?? 0) === 0 ? "9:00 AM IST" : "1:00 PM IST";
 }
 
 function fmtScheduledDate(dateStr: string): string {
@@ -27,22 +27,38 @@ function fmtScheduledDate(dateStr: string): string {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const diff = d.getTime() - today.getTime();
-  if (diff >= 0 && diff < 86400000) return "Today";
+  if (diff >= 0 && diff < 86400000)   return "Today";
   if (diff >= 86400000 && diff < 172800000) return "Tomorrow";
   return d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", timeZone: "UTC" });
 }
 
-export function PostCard({ id, content: initialContent, postType, initialStatus, sortOrder, scheduledDate }: PostCardProps) {
-  const [status, setStatus] = useState<PostStatus>(initialStatus);
-  const [content, setContent] = useState(initialContent);
-  const [editing, setEditing] = useState(false);
+const STATUS_DOT_COLOR: Record<PostStatus, string> = {
+  draft:     "#52525b",
+  approved:  "#4ade80",
+  rejected:  "#f87171",
+  published: "#a5b4fc",
+  scheduled: "#a5b4fc",
+  failed:    "#fb923c",
+};
+
+export function PostCard({
+  id,
+  content: initialContent,
+  postType,
+  initialStatus,
+  sortOrder,
+  scheduledDate,
+}: PostCardProps) {
+  const [status, setStatus]       = useState<PostStatus>(initialStatus);
+  const [content, setContent]     = useState(initialContent);
+  const [editing, setEditing]     = useState(false);
   const [editDraft, setEditDraft] = useState(initialContent);
   const [isPending, startTransition] = useTransition();
 
-  const isShort = postType === "x_short";
+  const isShort    = postType === "x_short";
   const isLinkedIn = postType === "linkedin";
-  const charCount = content.length;
-  const overLimit = isShort && charCount > 480;
+  const charCount  = content.length;
+  const overLimit  = isShort && charCount > 480;
 
   const approved  = status === "approved";
   const rejected  = status === "rejected";
@@ -51,7 +67,7 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
   const failed    = status === "failed";
   const terminal  = published || scheduled || failed;
 
-  const scheduledTime = getPostTime(postType, sortOrder);
+  const time = getPostTime(postType, sortOrder);
 
   function setStatusOpt(next: "approved" | "rejected" | "draft") {
     setStatus(next);
@@ -64,83 +80,68 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
     startTransition(async () => { await updatePostContent(id, editDraft); });
   }
 
-  const borderColor = approved  ? "rgba(74,222,128,0.2)"
-    : rejected  ? "rgba(248,113,113,0.12)"
-    : published ? "rgba(109,107,245,0.2)"
-    : scheduled ? "rgba(109,107,245,0.2)"
-    : failed    ? "rgba(251,146,60,0.25)"
-    : "var(--border)";
+  const cardClass = `post-card ${
+    approved  ? "post-card-approved"  :
+    rejected  ? "post-card-rejected"  :
+    published ? "post-card-published" :
+    failed    ? "post-card-failed"    : ""
+  }`;
 
-  const typeLabel = isShort
-    ? `Short ${sortOrder !== undefined ? sortOrder + 1 : ""}`
-    : postType === "x_long" ? "Long" : "LinkedIn";
+  const typeLabel =
+    isShort    ? `Short ${sortOrder !== undefined ? sortOrder + 1 : ""}` :
+    postType === "x_long" ? "Long" : "LinkedIn";
 
   return (
-    <div style={{
-      background: "var(--card)",
-      border: `1px solid ${borderColor}`,
-      borderRadius: "var(--radius)",
-      padding: "1rem 1.125rem",
-      display: "flex",
-      flexDirection: "column",
-      gap: "0.875rem",
-      opacity: rejected ? 0.5 : 1,
-      transition: "border-color 0.15s, opacity 0.15s",
-    }}>
+    <div className={cardClass}>
 
-      {/* Header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap" }}>
-          <TypeBadge label={typeLabel} />
+      {/* ── Header ── */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>
+        <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexWrap: "wrap", minWidth: 0 }}>
+          <span className="post-type-badge">{typeLabel}</span>
+
+          {/* char count */}
           {isShort && (
-            <span style={{
-              fontSize: "0.7rem",
-              color: overLimit ? "var(--error)" : "var(--muted-2)",
-              fontVariantNumeric: "tabular-nums",
-            }}>
+            <span style={{ fontSize: "0.68rem", color: overLimit ? "var(--error)" : "var(--muted-2)", fontVariantNumeric: "tabular-nums" }}>
               {charCount}/480
             </span>
           )}
           {isLinkedIn && (
-            <span style={{
-              fontSize: "0.7rem",
-              color: charCount >= 2000 ? "var(--success)" : "var(--muted-2)",
-              fontVariantNumeric: "tabular-nums",
-            }}>
+            <span style={{ fontSize: "0.68rem", color: charCount >= 2000 ? "var(--success)" : "var(--muted-2)", fontVariantNumeric: "tabular-nums" }}>
               {charCount} chars
             </span>
           )}
-          {scheduledDate && (
-            <span style={{
-              fontSize: "0.68rem",
-              color: "var(--muted-2)",
-              display: "flex",
-              alignItems: "center",
-              gap: "0.25rem",
-            }}>
-              <span style={{ opacity: 0.5 }}>·</span>
-              {fmtScheduledDate(scheduledDate)} at {scheduledTime}
+
+          {/* scheduled time */}
+          {scheduledDate && !terminal && (
+            <span style={{ fontSize: "0.68rem", color: "var(--muted-2)", display: "flex", alignItems: "center", gap: "0.3rem" }}>
+              <span style={{ opacity: 0.4 }}>·</span>
+              {fmtScheduledDate(scheduledDate)}, {time}
             </span>
           )}
         </div>
-        <StatusBadge status={status} />
+
+        {/* Status badge */}
+        <span className={`post-status post-status-${status}`} style={{ flexShrink: 0 }}>
+          <span className="post-status-dot" style={{ background: STATUS_DOT_COLOR[status] }} />
+          {status.charAt(0).toUpperCase() + status.slice(1)}
+        </span>
       </div>
 
-      {/* Content */}
+      {/* ── Content ── */}
       {editing ? (
         <textarea
           value={editDraft}
           onChange={(e) => setEditDraft(e.target.value)}
-          rows={isLinkedIn ? 14 : isShort ? 4 : 8}
+          rows={isLinkedIn ? 14 : isShort ? 5 : 9}
           autoFocus
           style={{
             width: "100%",
-            padding: "0.75rem",
-            borderRadius: "var(--radius-sm)",
-            border: "1px solid rgba(109,107,245,0.35)",
-            background: "rgba(0,0,0,0.3)",
+            padding: "0.875rem 1rem",
+            borderRadius: 8,
+            border: "1px solid rgba(109,107,245,0.4)",
+            background: "rgba(0,0,0,0.35)",
             color: "var(--fg)",
-            fontSize: "0.875rem",
+            fontSize: "0.9rem",
             lineHeight: 1.7,
             resize: "vertical",
             outline: "none",
@@ -149,166 +150,92 @@ export function PostCard({ id, content: initialContent, postType, initialStatus,
           }}
         />
       ) : (
-        <div style={{
-          maxHeight: isLinkedIn ? 360 : isShort ? "none" : 200,
-          overflowY: "auto",
-        }}>
+        <div style={{ maxHeight: isLinkedIn ? 380 : isShort ? "none" : 220, overflowY: "auto" }}>
           <p style={{
-            fontSize: "0.875rem",
+            fontSize: "0.9rem",
             lineHeight: 1.75,
-            color: "var(--fg)",
+            color: rejected ? "var(--muted)" : "#e4e4e7",
             margin: 0,
             whiteSpace: "pre-wrap",
+            fontWeight: 400,
           }}>
             {content}
           </p>
         </div>
       )}
 
-      {/* Actions */}
-      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      {/* ── Actions ── */}
+      <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", paddingTop: "0.125rem" }}>
         {terminal ? (
-          <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", width: "100%" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.625rem", width: "100%" }}>
             {published && (
-              <span style={{ fontSize: "0.75rem", color: "var(--accent-fg)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                <Dot color="var(--accent)" /> Live
+              <span style={{ fontSize: "0.75rem", color: "var(--accent-fg)", display: "flex", alignItems: "center", gap: "0.4rem", fontWeight: 500 }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
+                Published
               </span>
             )}
             {scheduled && (
-              <span style={{ fontSize: "0.75rem", color: "var(--muted)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                <Dot color="var(--muted)" /> Queued for {scheduledTime}
+              <span style={{ fontSize: "0.75rem", color: "var(--muted)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--muted)", display: "inline-block" }} />
+                Queued · {time}
               </span>
             )}
             {failed && (
               <>
-                <span style={{ fontSize: "0.75rem", color: "var(--warning)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                  <Dot color="var(--warning)" /> Failed
+                <span style={{ fontSize: "0.75rem", color: "var(--warning)", display: "flex", alignItems: "center", gap: "0.4rem" }}>
+                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--warning)", display: "inline-block" }} />
+                  Failed to publish
                 </span>
                 <div style={{ flex: 1 }} />
-                <ActionBtn variant="ghost" onClick={() => setStatusOpt("approved")} disabled={isPending}>
+                <button className="post-btn post-btn-ghost" onClick={() => setStatusOpt("approved")} disabled={isPending}>
                   Retry
-                </ActionBtn>
+                </button>
               </>
             )}
           </div>
         ) : editing ? (
           <>
-            <ActionBtn variant="primary" onClick={saveEdit} disabled={isPending}>Save</ActionBtn>
-            <ActionBtn variant="ghost" onClick={() => { setEditing(false); setEditDraft(content); }}>Cancel</ActionBtn>
+            <button className="post-btn post-btn-primary" onClick={saveEdit} disabled={isPending}>
+              {isPending ? "Saving…" : "Save"}
+            </button>
+            <button className="post-btn post-btn-ghost" onClick={() => { setEditing(false); setEditDraft(content); }}>
+              Cancel
+            </button>
           </>
         ) : (
           <>
-            <ActionBtn variant="ghost" onClick={() => setEditing(true)}>Edit</ActionBtn>
+            <button className="post-btn post-btn-edit" onClick={() => setEditing(true)}>
+              Edit
+            </button>
             <div style={{ flex: 1 }} />
             {approved && (
-              <ActionBtn variant="ghost" onClick={() => setStatusOpt("draft")} disabled={isPending}>Undo</ActionBtn>
+              <button className="post-btn post-btn-ghost" onClick={() => setStatusOpt("draft")} disabled={isPending}>
+                Undo
+              </button>
             )}
             {rejected && (
-              <ActionBtn variant="ghost" onClick={() => setStatusOpt("draft")} disabled={isPending}>Restore</ActionBtn>
+              <button className="post-btn post-btn-ghost" onClick={() => setStatusOpt("draft")} disabled={isPending}>
+                Restore
+              </button>
             )}
             {!approved && !rejected && (
               <>
-                <ActionBtn variant="danger" onClick={() => setStatusOpt("rejected")} disabled={isPending}>Reject</ActionBtn>
-                <ActionBtn variant="success" onClick={() => setStatusOpt("approved")} disabled={isPending}>Approve</ActionBtn>
+                <button className="post-btn post-btn-reject" onClick={() => setStatusOpt("rejected")} disabled={isPending}>
+                  Reject
+                </button>
+                <button className="post-btn post-btn-approve" onClick={() => setStatusOpt("approved")} disabled={isPending}>
+                  ✓ Approve
+                </button>
               </>
             )}
             {approved && (
-              <ActionBtn variant="success-solid" disabled>Approved</ActionBtn>
+              <button className="post-btn post-btn-approve-solid" disabled>
+                ✓ Approved
+              </button>
             )}
           </>
         )}
       </div>
     </div>
-  );
-}
-
-function Dot({ color }: { color: string }) {
-  return (
-    <span style={{
-      display: "inline-block",
-      width: 6,
-      height: 6,
-      borderRadius: "50%",
-      background: color,
-      flexShrink: 0,
-    }} />
-  );
-}
-
-function TypeBadge({ label }: { label: string }) {
-  return (
-    <span style={{
-      fontSize: "0.62rem",
-      fontWeight: 700,
-      letterSpacing: "0.07em",
-      textTransform: "uppercase",
-      color: "var(--muted-2)",
-      padding: "0.2rem 0.5rem",
-      borderRadius: 4,
-      background: "rgba(255,255,255,0.05)",
-      border: "1px solid var(--border)",
-    }}>
-      {label}
-    </span>
-  );
-}
-
-function StatusBadge({ status }: { status: PostStatus }) {
-  const map: Record<PostStatus, { label: string; color: string; bg: string }> = {
-    draft:     { label: "Draft",     color: "var(--muted)",    bg: "rgba(255,255,255,0.05)" },
-    approved:  { label: "Approved",  color: "var(--success)",  bg: "var(--success-bg)"      },
-    rejected:  { label: "Rejected",  color: "var(--error)",    bg: "var(--error-bg)"        },
-    published: { label: "Published", color: "var(--accent-fg)", bg: "var(--accent-bg)"      },
-    scheduled: { label: "Scheduled", color: "var(--accent-fg)", bg: "var(--accent-bg)"      },
-    failed:    { label: "Failed",    color: "var(--warning)",  bg: "var(--warning-bg)"      },
-  };
-  const c = map[status] ?? map.draft;
-  return (
-    <span style={{
-      fontSize: "0.62rem",
-      fontWeight: 700,
-      letterSpacing: "0.05em",
-      textTransform: "uppercase",
-      padding: "0.2rem 0.55rem",
-      borderRadius: 4,
-      background: c.bg,
-      color: c.color,
-    }}>
-      {c.label}
-    </span>
-  );
-}
-
-function ActionBtn({ variant, onClick, disabled, children }: {
-  variant: "primary" | "ghost" | "success" | "success-solid" | "danger";
-  onClick?: () => void;
-  disabled?: boolean;
-  children: React.ReactNode;
-}) {
-  const styles: Record<string, React.CSSProperties> = {
-    primary:         { background: "var(--accent)",    color: "#fff",              border: "none" },
-    ghost:           { background: "transparent",       color: "var(--muted)",      border: "1px solid var(--border)" },
-    success:         { background: "var(--success-bg)", color: "var(--success)",    border: "1px solid rgba(74,222,128,0.2)" },
-    "success-solid": { background: "var(--success-bg)", color: "var(--success)",    border: "1px solid rgba(74,222,128,0.2)" },
-    danger:          { background: "var(--error-bg)",   color: "var(--error)",      border: "1px solid rgba(248,113,113,0.15)" },
-  };
-  return (
-    <button
-      onClick={onClick}
-      disabled={disabled}
-      style={{
-        padding: "0.4rem 0.875rem",
-        borderRadius: "var(--radius-sm)",
-        fontSize: "0.8rem",
-        fontWeight: 500,
-        cursor: disabled ? "default" : "pointer",
-        opacity: disabled && variant !== "success-solid" ? 0.5 : 1,
-        fontFamily: "inherit",
-        lineHeight: 1,
-        ...styles[variant],
-      }}
-    >
-      {children}
-    </button>
   );
 }

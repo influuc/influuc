@@ -124,7 +124,7 @@ export default async function LinkedInSchedulePage() {
         }}>
           1 per day
         </span>
-        <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--accent-fg)" }}>10:00 AM</span>
+        <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--accent-fg)" }}>9:30 AM IST</span>
         <span style={{ fontSize: "0.75rem", color: "var(--muted-2)", marginLeft: "auto" }}>
           Daily posting schedule
         </span>
