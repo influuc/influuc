@@ -120,7 +120,7 @@ export default async function StrategyPage() {
           borderRadius: "var(--radius)",
         }}>
           <p style={{ fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--muted-2)", margin: "0 0 0.5rem" }}>
-            This week's theme
+            This week&apos;s theme
           </p>
           <p style={{ fontSize: "0.95rem", color: "var(--fg)", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
             {strat.summary}
@@ -194,7 +194,7 @@ export default async function StrategyPage() {
                   </p>
                   {idea.hook && (
                     <p style={{ fontSize: "0.82rem", color: "var(--muted)", margin: 0, lineHeight: 1.5, fontStyle: "italic" }}>
-                      "{idea.hook}"
+                      &ldquo;{idea.hook}&rdquo;
                     </p>
                   )}
                   {idea.talking_points?.length > 0 && (
