@@ -131,7 +131,7 @@ export function Sidebar({ firstName = "", email = "", draftX = 0, draftLinkedIn 
         <nav style={{ display: "flex", flexDirection: "column", gap: 3 }}>
           {NAV_MAIN.map(({ href, label, icon, exact, badgeKey }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
-            const badge = badgeKey ? badges[badgeKey] : 0;
+            const badge = badgeKey ? (badges[badgeKey] ?? 0) : 0;
             return (
               <Link key={href} href={href} style={{ textDecoration: "none" }}>
                 <div style={{
