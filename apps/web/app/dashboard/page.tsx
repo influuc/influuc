@@ -253,6 +253,51 @@ export default async function DashboardPage() {
         </div>
       )}
 
+      {/* Review urgency — show when posts need attention */}
+      {(xStats.draft > 0 || liStats.draft > 0) && (
+        <div style={{
+          padding: "0.875rem 1.25rem",
+          borderRadius: "var(--radius)",
+          background: "rgba(251,146,60,0.05)",
+          border: "1px solid rgba(251,146,60,0.15)",
+          display: "flex",
+          alignItems: "center",
+          gap: "1rem",
+          flexWrap: "wrap",
+        }}>
+          <span style={{ fontSize: "0.875rem", fontWeight: 600, color: "#fb923c" }}>
+            Needs review
+          </span>
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {xStats.draft > 0 && (
+              <Link href="/dashboard/x" style={{
+                fontSize: "0.78rem", color: "var(--muted)", textDecoration: "none",
+                padding: "0.3rem 0.75rem", borderRadius: 6,
+                background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+                display: "flex", alignItems: "center", gap: "0.375rem",
+              }}>
+                <span style={{ color: "#fb923c", fontWeight: 600 }}>{xStats.draft}</span> X posts
+                <span style={{ opacity: 0.4 }}>→</span>
+              </Link>
+            )}
+            {liStats.draft > 0 && (
+              <Link href="/dashboard/linkedin" style={{
+                fontSize: "0.78rem", color: "var(--muted)", textDecoration: "none",
+                padding: "0.3rem 0.75rem", borderRadius: 6,
+                background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+                display: "flex", alignItems: "center", gap: "0.375rem",
+              }}>
+                <span style={{ color: "#fb923c", fontWeight: 600 }}>{liStats.draft}</span> LinkedIn posts
+                <span style={{ opacity: 0.4 }}>→</span>
+              </Link>
+            )}
+          </div>
+          <span style={{ fontSize: "0.72rem", color: "var(--muted-2)", marginLeft: "auto" }}>
+            Approved posts publish on schedule · unapproved posts are skipped
+          </span>
+        </div>
+      )}
+
       {/* Strategy card — full width */}
       {strategy && (
         <Card>
@@ -321,7 +366,7 @@ export default async function DashboardPage() {
                 Identity · Expertise · Audience · Positioning
               </p>
             </div>
-            <Link href="/onboarding/summary" style={{
+            <Link href="/dashboard/brain" style={{
               padding: "0.5rem 1rem",
               borderRadius: "var(--radius-sm)",
               border: "1px solid var(--border-med)",
@@ -333,7 +378,7 @@ export default async function DashboardPage() {
               whiteSpace: "nowrap",
               flexShrink: 0,
             }}>
-              Review
+              View →
             </Link>
           </div>
         </Card>

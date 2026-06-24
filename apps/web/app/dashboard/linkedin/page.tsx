@@ -1,8 +1,8 @@
 import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
-import { PostCard } from "../post-card";
 import { ApproveAllBtn } from "../approve-all-btn";
+import { LinkedInPostList } from "./linkedin-post-list";
 
 export default async function LinkedInSchedulePage() {
   let founder;
@@ -45,7 +45,7 @@ export default async function LinkedInSchedulePage() {
 
   const { data: posts } = await db
     .from("weekly_posts")
-    .select("*")
+    .select("id, content, status, scheduled_date")
     .eq("founder_id", founder.id)
     .eq("strategy_id", strategy.id)
     .eq("platform", "linkedin")
@@ -57,8 +57,8 @@ export default async function LinkedInSchedulePage() {
   const total = allPosts.length;
 
   const strat = strategy.strategy as { summary?: string; ideas?: Array<{ date: string; theme: string }> };
-  const ideaByDate = new Map((strat.ideas ?? []).map(i => [i.date, i.theme]));
-  const mode = prefs?.mode ?? "manual";
+  const ideas = strat.ideas ?? [];
+  const mode = (prefs?.mode ?? "manual") as "manual" | "assisted" | "autopilot";
   const isAutomatic = mode === "assisted";
   const isAutopilot = mode === "autopilot";
 
@@ -70,9 +70,9 @@ export default async function LinkedInSchedulePage() {
       width: "100%",
       display: "flex",
       flexDirection: "column",
-      gap: "2rem",
+      gap: "1.75rem",
     }}>
-      {/* Header */}
+      {/* ── Header ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>LinkedIn</h1>
@@ -114,7 +114,7 @@ export default async function LinkedInSchedulePage() {
         </div>
       </div>
 
-      {/* Schedule info banner */}
+      {/* ── Schedule banner ── */}
       <div style={{
         padding: "0.75rem 1rem",
         borderRadius: 10,
@@ -138,51 +138,12 @@ export default async function LinkedInSchedulePage() {
         </span>
       </div>
 
-      {/* Posts */}
-      {allPosts.map(post => (
-        <section key={post.id} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          <div style={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "0.25rem",
-            paddingBottom: "0.625rem",
-            borderBottom: "1px solid var(--border)",
-          }}>
-            <h2 style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--muted-2)",
-              margin: 0,
-            }}>
-              {fmtDay(post.scheduled_date)}
-            </h2>
-            {ideaByDate.has(post.scheduled_date) && (
-              <p style={{ fontSize: "0.8rem", color: "var(--accent-fg)", margin: 0, fontWeight: 500 }}>
-                {ideaByDate.get(post.scheduled_date)}
-              </p>
-            )}
-          </div>
-
-          <PostCard
-            id={post.id}
-            content={post.content}
-            postType="linkedin"
-            initialStatus={post.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
-            scheduledDate={post.scheduled_date}
-            mode={mode as "manual" | "assisted" | "autopilot"}
-          />
-        </section>
-      ))}
+      {/* ── Filterable post list (client component) ── */}
+      <LinkedInPostList posts={allPosts} mode={mode} ideas={ideas} />
     </div>
   );
 }
 
 function fmt(d: string) {
   return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-}
-
-function fmtDay(d: string) {
-  return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
 }

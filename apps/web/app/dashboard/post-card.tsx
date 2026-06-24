@@ -55,6 +55,7 @@ export function PostCard({
   const [content, setContent]     = useState(initialContent);
   const [editing, setEditing]     = useState(false);
   const [editDraft, setEditDraft] = useState(initialContent);
+  const [toast, setToast]         = useState<string | null>(null);
   const [isPending, startTransition] = useTransition();
 
   const isShort    = postType === "x_short";
@@ -73,6 +74,12 @@ export function PostCard({
 
   function setStatusOpt(next: "approved" | "rejected" | "draft") {
     setStatus(next);
+    if (next === "approved" && scheduledDate) {
+      const dayLabel = fmtScheduledDate(scheduledDate);
+      const msg = `Approved · posting ${dayLabel} at ${time}`;
+      setToast(msg);
+      setTimeout(() => setToast(null), 2800);
+    }
     startTransition(async () => { await updatePostStatus(id, next); });
   }
 
@@ -94,7 +101,29 @@ export function PostCard({
     postType === "x_long" ? "Long" : "LinkedIn";
 
   return (
-    <div className={cardClass}>
+    <div className={cardClass} style={{ position: "relative" }}>
+      {toast && (
+        <div className="animate-fade-up" style={{
+          position: "absolute",
+          bottom: "calc(100% + 8px)",
+          left: "50%",
+          transform: "translateX(-50%)",
+          background: "rgba(18,18,20,0.96)",
+          border: "1px solid rgba(74,222,128,0.3)",
+          borderRadius: 8,
+          padding: "0.45rem 1rem",
+          fontSize: "0.73rem",
+          color: "#4ade80",
+          fontWeight: 500,
+          whiteSpace: "nowrap",
+          zIndex: 20,
+          backdropFilter: "blur(12px)",
+          boxShadow: "0 4px 24px rgba(0,0,0,0.5)",
+          pointerEvents: "none",
+        }}>
+          ✓ {toast}
+        </div>
+      )}
 
       {/* ── Header ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", gap: "0.5rem" }}>

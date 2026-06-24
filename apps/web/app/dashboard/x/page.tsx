@@ -1,8 +1,8 @@
 import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
-import { PostCard } from "../post-card";
 import { ApproveAllBtn } from "../approve-all-btn";
+import { XPostList } from "./x-post-list";
 
 export default async function XSchedulePage() {
   let founder;
@@ -39,7 +39,7 @@ export default async function XSchedulePage() {
 
   const { data: posts } = await db
     .from("weekly_posts")
-    .select("*")
+    .select("id, content, post_type, status, sort_order, scheduled_date")
     .eq("founder_id", founder.id)
     .eq("strategy_id", strategy.id)
     .eq("platform", "x")
@@ -47,14 +47,13 @@ export default async function XSchedulePage() {
     .order("sort_order");
 
   const allPosts = posts ?? [];
-  const byDay = groupByDay(allPosts);
   const approved = allPosts.filter(p => p.status === "approved" || p.status === "published").length;
   const draftCount = allPosts.filter(p => p.status === "draft").length;
   const total = allPosts.length;
   const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
 
   const strat = strategy.strategy as { summary?: string };
-  const mode = prefs?.mode ?? "manual";
+  const mode = (prefs?.mode ?? "manual") as "manual" | "assisted" | "autopilot";
   const isAutomatic = mode === "assisted";
   const isAutopilot = mode === "autopilot";
 
@@ -66,9 +65,9 @@ export default async function XSchedulePage() {
       width: "100%",
       display: "flex",
       flexDirection: "column",
-      gap: "2rem",
+      gap: "1.75rem",
     }}>
-      {/* Header */}
+      {/* ── Header ── */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <div>
           <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>X Posts</h1>
@@ -96,7 +95,7 @@ export default async function XSchedulePage() {
         </div>
       </div>
 
-      {/* Schedule info banner */}
+      {/* ── Schedule banner ── */}
       <div style={{
         padding: "0.75rem 1rem",
         borderRadius: 10,
@@ -111,65 +110,14 @@ export default async function XSchedulePage() {
         <Divider />
         <TimeSlot label="Short 2" time="1:00 PM IST" />
         <Divider />
-        <TimeSlot label="Long" time="7:00 PM IST" />
+        <TimeSlot label="Long"    time="7:00 PM IST" />
         <span style={{ fontSize: "0.75rem", color: "var(--muted-2)", marginLeft: "auto" }}>
           Daily posting schedule
         </span>
       </div>
 
-      {/* Days */}
-      {byDay.map(({ date, shorts, longs }) => (
-        <section key={date} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.75rem",
-            paddingBottom: "0.625rem",
-            borderBottom: "1px solid var(--border)",
-          }}>
-            <h2 style={{
-              fontSize: "0.75rem",
-              fontWeight: 600,
-              letterSpacing: "0.06em",
-              textTransform: "uppercase",
-              color: "var(--muted-2)",
-              margin: 0,
-            }}>
-              {fmtDay(date)}
-            </h2>
-          </div>
-
-          {shorts.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
-              {shorts.map(p => (
-                <PostCard
-                  key={p.id}
-                  id={p.id}
-                  content={p.content}
-                  postType="x_short"
-                  initialStatus={p.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
-                  sortOrder={p.sort_order}
-                  scheduledDate={p.scheduled_date}
-                  mode={mode as "manual" | "assisted" | "autopilot"}
-                />
-              ))}
-            </div>
-          )}
-
-          {longs.map(p => (
-            <PostCard
-              key={p.id}
-              id={p.id}
-              content={p.content}
-              postType="x_long"
-              initialStatus={p.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
-              sortOrder={p.sort_order}
-              scheduledDate={p.scheduled_date}
-              mode={mode as "manual" | "assisted" | "autopilot"}
-            />
-          ))}
-        </section>
-      ))}
+      {/* ── Filterable post list (client component) ── */}
+      <XPostList posts={allPosts} mode={mode} />
     </div>
   );
 }
@@ -219,13 +167,7 @@ function ProgressPill({ approved, total, pct }: { approved: number; total: numbe
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div style={{
-      flex: 1,
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "4rem 2rem",
-    }}>
+    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem 2rem" }}>
       <p style={{ color: "var(--muted)", fontSize: "0.875rem", textAlign: "center", maxWidth: 360, lineHeight: 1.6 }}>
         {message}
       </p>
@@ -233,22 +175,6 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-function groupByDay(posts: { scheduled_date: string; post_type: string; sort_order: number; id: string; content: string; status: string }[]) {
-  const map = new Map<string, { shorts: typeof posts; longs: typeof posts }>();
-  for (const p of posts) {
-    if (!map.has(p.scheduled_date)) map.set(p.scheduled_date, { shorts: [], longs: [] });
-    if (p.post_type === "x_short") map.get(p.scheduled_date)!.shorts.push(p);
-    else map.get(p.scheduled_date)!.longs.push(p);
-  }
-  return Array.from(map.entries())
-    .sort(([a], [b]) => a.localeCompare(b))
-    .map(([date, groups]) => ({ date, ...groups }));
-}
-
 function fmt(d: string) {
   return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
-}
-
-function fmtDay(d: string) {
-  return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
 }
