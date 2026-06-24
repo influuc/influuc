@@ -257,6 +257,16 @@
   color: #d4d4d8 !important;
 }
 
+/* Calendar row hover */
+.cal-row:hover {
+  background: rgba(255,255,255,0.04) !important;
+}
+
+/* Schedule table row hover */
+.sched-row:hover {
+  background: rgba(255,255,255,0.03) !important;
+}
+
 /* ── Badges ────────────────────────────────────────────────────────────────── */
 
 .badge {

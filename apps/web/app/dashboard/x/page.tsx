@@ -1,8 +1,7 @@
 import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
-import { ApproveAllBtn } from "../approve-all-btn";
-import { XPostList } from "./x-post-list";
+import { XCalendar } from "./x-calendar";
 
 export default async function XSchedulePage() {
   let founder;
@@ -18,23 +17,23 @@ export default async function XSchedulePage() {
 
   const db = createServiceClient();
 
-  const [{ data: strategy }, { data: prefs }] = await Promise.all([
-    db
-      .from("weekly_strategies")
-      .select("id, week_start, strategy")
-      .eq("founder_id", founder.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single(),
-    db
-      .from("operating_preferences")
-      .select("mode")
-      .eq("founder_id", founder.id)
-      .single(),
-  ]);
+  const { data: strategy } = await db
+    .from("weekly_strategies")
+    .select("id, week_start, strategy")
+    .eq("founder_id", founder.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
   if (!strategy) {
-    return <EmptyState message="No content generated yet. Complete onboarding to generate your first week." />;
+    return (
+      <div style={{ padding: "2rem 2.5rem 4rem", maxWidth: 900, margin: "0 auto", width: "100%" }}>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 0.4rem" }}>X Calendar</h1>
+        <p style={{ color: "var(--muted)", fontSize: "0.82rem", margin: 0 }}>
+          No content generated yet. Complete onboarding to generate your first week.
+        </p>
+      </div>
+    );
   }
 
   const { data: posts } = await db
@@ -47,134 +46,28 @@ export default async function XSchedulePage() {
     .order("sort_order");
 
   const allPosts = posts ?? [];
-  const approved = allPosts.filter(p => p.status === "approved" || p.status === "published").length;
-  const draftCount = allPosts.filter(p => p.status === "draft").length;
-  const total = allPosts.length;
-  const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
-
-  const strat = strategy.strategy as { summary?: string };
-  const mode = (prefs?.mode ?? "manual") as "manual" | "assisted" | "autopilot";
-  const isAutomatic = mode === "assisted";
-  const isAutopilot = mode === "autopilot";
 
   return (
     <div style={{
       padding: "2rem 2.5rem 4rem",
-      maxWidth: 1000,
+      maxWidth: 900,
       margin: "0 auto",
       width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      gap: "1.75rem",
     }}>
-      {/* ── Header ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-        <div>
-          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>X Posts</h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: "0.3rem" }}>
-            Week of {fmt(strategy.week_start)}
-            {strat.summary && <> · <span style={{ fontStyle: "italic" }}>{strat.summary}</span></>}
-          </p>
+      <div style={{ marginBottom: "0.375rem", display: "flex", alignItems: "center", gap: "0.625rem" }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 7,
+          background: "rgba(255,255,255,0.08)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+        }}>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--fg)">
+            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+          </svg>
         </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
-          {isAutomatic && draftCount > 0 && (
-            <ApproveAllBtn strategyId={strategy.id} platform="x" draftCount={draftCount} />
-          )}
-          {isAutopilot && (
-            <span style={{
-              fontSize: "0.75rem", color: "var(--accent-fg)", fontWeight: 600,
-              display: "flex", alignItems: "center", gap: "0.4rem",
-              padding: "0.4rem 0.875rem", borderRadius: 999,
-              background: "rgba(109,107,245,0.1)", border: "1px solid rgba(109,107,245,0.2)",
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
-              Autopilot active — posts publish automatically
-            </span>
-          )}
-          <ProgressPill approved={approved} total={total} pct={pct} />
-        </div>
+        <h1 style={{ fontSize: "1.3rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>X Calendar</h1>
       </div>
 
-      {/* ── Schedule banner ── */}
-      <div style={{
-        padding: "0.75rem 1rem",
-        borderRadius: 10,
-        background: "rgba(109,107,245,0.06)",
-        border: "1px solid rgba(109,107,245,0.12)",
-        display: "flex",
-        alignItems: "center",
-        gap: "1.5rem",
-        flexWrap: "wrap",
-      }}>
-        <TimeSlot label="Short 1" time="9:00 AM IST" />
-        <Divider />
-        <TimeSlot label="Short 2" time="1:00 PM IST" />
-        <Divider />
-        <TimeSlot label="Long"    time="7:00 PM IST" />
-        <span style={{ fontSize: "0.75rem", color: "var(--muted-2)", marginLeft: "auto" }}>
-          Daily posting schedule
-        </span>
-      </div>
-
-      {/* ── Filterable post list (client component) ── */}
-      <XPostList posts={allPosts} mode={mode} />
+      <XCalendar posts={allPosts} />
     </div>
   );
-}
-
-function TimeSlot({ label, time }: { label: string; time: string }) {
-  return (
-    <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-      <span style={{
-        fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.06em",
-        textTransform: "uppercase", color: "var(--muted-2)",
-        padding: "2px 6px", borderRadius: 4,
-        background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
-      }}>
-        {label}
-      </span>
-      <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--accent-fg)", fontVariantNumeric: "tabular-nums" }}>
-        {time}
-      </span>
-    </div>
-  );
-}
-
-function Divider() {
-  return <span style={{ width: 1, height: 16, background: "rgba(255,255,255,0.08)", flexShrink: 0 }} />;
-}
-
-function ProgressPill({ approved, total, pct }: { approved: number; total: number; pct: number }) {
-  const allDone = total > 0 && approved === total;
-  return (
-    <div style={{
-      display: "flex",
-      alignItems: "center",
-      gap: "0.625rem",
-      padding: "0.4rem 0.875rem",
-      borderRadius: 999,
-      background: allDone ? "var(--success-bg)" : "var(--card)",
-      border: `1px solid ${allDone ? "rgba(74,222,128,0.2)" : "var(--border)"}`,
-    }}>
-      <span style={{ fontSize: "0.8rem", fontWeight: 600, color: allDone ? "var(--success)" : "var(--fg)" }}>
-        {approved}/{total}
-      </span>
-      <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>approved</span>
-      {allDone && <span style={{ fontSize: "0.75rem", color: "var(--success)" }}>✓</span>}
-    </div>
-  );
-}
-
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem 2rem" }}>
-      <p style={{ color: "var(--muted)", fontSize: "0.875rem", textAlign: "center", maxWidth: 360, lineHeight: 1.6 }}>
-        {message}
-      </p>
-    </div>
-  );
-}
-
-function fmt(d: string) {
-  return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }

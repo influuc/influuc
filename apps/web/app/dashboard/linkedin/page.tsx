@@ -1,8 +1,7 @@
 import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
-import { ApproveAllBtn } from "../approve-all-btn";
-import { LinkedInPostList } from "./linkedin-post-list";
+import { LinkedInCalendar } from "./linkedin-calendar";
 
 export default async function LinkedInSchedulePage() {
   let founder;
@@ -18,25 +17,19 @@ export default async function LinkedInSchedulePage() {
 
   const db = createServiceClient();
 
-  const [{ data: strategy }, { data: prefs }] = await Promise.all([
-    db
-      .from("weekly_strategies")
-      .select("id, week_start, strategy")
-      .eq("founder_id", founder.id)
-      .order("created_at", { ascending: false })
-      .limit(1)
-      .single(),
-    db
-      .from("operating_preferences")
-      .select("mode")
-      .eq("founder_id", founder.id)
-      .single(),
-  ]);
+  const { data: strategy } = await db
+    .from("weekly_strategies")
+    .select("id, week_start, strategy")
+    .eq("founder_id", founder.id)
+    .order("created_at", { ascending: false })
+    .limit(1)
+    .single();
 
   if (!strategy) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem 2rem" }}>
-        <p style={{ color: "var(--muted)", fontSize: "0.875rem", textAlign: "center", maxWidth: 360, lineHeight: 1.6 }}>
+      <div style={{ padding: "2rem 2.5rem 4rem", maxWidth: 900, margin: "0 auto", width: "100%" }}>
+        <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 0.4rem" }}>LinkedIn Calendar</h1>
+        <p style={{ color: "var(--muted)", fontSize: "0.82rem", margin: 0 }}>
           No content generated yet. Complete onboarding to generate your first week.
         </p>
       </div>
@@ -45,105 +38,35 @@ export default async function LinkedInSchedulePage() {
 
   const { data: posts } = await db
     .from("weekly_posts")
-    .select("id, content, status, scheduled_date")
+    .select("id, content, post_type, status, scheduled_date")
     .eq("founder_id", founder.id)
     .eq("strategy_id", strategy.id)
     .eq("platform", "linkedin")
     .order("scheduled_date");
 
   const allPosts = posts ?? [];
-  const approved = allPosts.filter(p => p.status === "approved" || p.status === "published").length;
-  const draftCount = allPosts.filter(p => p.status === "draft").length;
-  const total = allPosts.length;
-
-  const strat = strategy.strategy as { summary?: string; ideas?: Array<{ date: string; theme: string }> };
-  const ideas = strat.ideas ?? [];
-  const mode = (prefs?.mode ?? "manual") as "manual" | "assisted" | "autopilot";
-  const isAutomatic = mode === "assisted";
-  const isAutopilot = mode === "autopilot";
 
   return (
     <div style={{
       padding: "2rem 2.5rem 4rem",
-      maxWidth: 800,
+      maxWidth: 900,
       margin: "0 auto",
       width: "100%",
-      display: "flex",
-      flexDirection: "column",
-      gap: "1.75rem",
     }}>
-      {/* ── Header ── */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-        <div>
-          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>LinkedIn</h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: "0.3rem" }}>
-            Week of {fmt(strategy.week_start)}
-            {strat.summary && <> · <span style={{ fontStyle: "italic" }}>{strat.summary}</span></>}
-          </p>
-        </div>
-        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
-          {isAutomatic && draftCount > 0 && (
-            <ApproveAllBtn strategyId={strategy.id} platform="linkedin" draftCount={draftCount} />
-          )}
-          {isAutopilot && (
-            <span style={{
-              fontSize: "0.75rem", color: "var(--accent-fg)", fontWeight: 600,
-              display: "flex", alignItems: "center", gap: "0.4rem",
-              padding: "0.4rem 0.875rem", borderRadius: 999,
-              background: "rgba(109,107,245,0.1)", border: "1px solid rgba(109,107,245,0.2)",
-            }}>
-              <span style={{ width: 6, height: 6, borderRadius: "50%", background: "var(--accent)", display: "inline-block" }} />
-              Autopilot active — posts publish automatically
-            </span>
-          )}
-          <div style={{
-            display: "flex",
-            alignItems: "center",
-            gap: "0.625rem",
-            padding: "0.4rem 0.875rem",
-            borderRadius: 999,
-            background: approved === total && total > 0 ? "var(--success-bg)" : "var(--card)",
-            border: `1px solid ${approved === total && total > 0 ? "rgba(74,222,128,0.2)" : "var(--border)"}`,
-          }}>
-            <span style={{ fontSize: "0.8rem", fontWeight: 600, color: approved === total && total > 0 ? "var(--success)" : "var(--fg)" }}>
-              {approved}/{total}
-            </span>
-            <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>approved</span>
-            {approved === total && total > 0 && <span style={{ fontSize: "0.75rem", color: "var(--success)" }}>✓</span>}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Schedule banner ── */}
-      <div style={{
-        padding: "0.75rem 1rem",
-        borderRadius: 10,
-        background: "rgba(109,107,245,0.06)",
-        border: "1px solid rgba(109,107,245,0.12)",
-        display: "flex",
-        alignItems: "center",
-        gap: "0.625rem",
-      }}>
-        <span style={{
-          fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.06em",
-          textTransform: "uppercase", color: "var(--muted-2)",
-          padding: "2px 6px", borderRadius: 4,
-          background: "rgba(255,255,255,0.05)", border: "1px solid var(--border)",
+      <div style={{ marginBottom: "0.375rem", display: "flex", alignItems: "center", gap: "0.625rem" }}>
+        <div style={{
+          width: 28, height: 28, borderRadius: 7,
+          background: "#0a66c2",
+          display: "flex", alignItems: "center", justifyContent: "center",
         }}>
-          1 per day
-        </span>
-        <span style={{ fontSize: "0.78rem", fontWeight: 600, color: "var(--accent-fg)" }}>9:30 AM IST</span>
-        <span style={{ fontSize: "0.75rem", color: "var(--muted-2)", marginLeft: "auto" }}>
-          Daily posting schedule
-        </span>
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="white">
+            <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
+          </svg>
+        </div>
+        <h1 style={{ fontSize: "1.3rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>LinkedIn Calendar</h1>
       </div>
 
-      {/* ── Filterable post list (client component) ── */}
-      <LinkedInPostList posts={allPosts} mode={mode} ideas={ideas} />
+      <LinkedInCalendar posts={allPosts} />
     </div>
   );
-}
-
-function fmt(d: string) {
-  return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric", timeZone: "UTC" });
 }
