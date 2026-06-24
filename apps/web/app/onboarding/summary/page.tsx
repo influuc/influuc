@@ -83,77 +83,36 @@ export default async function SummaryPage() {
   const confirmedFacts = facts?.filter((f) => f.status === "active").length ?? 0;
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        padding: "3rem 1.5rem",
-        gap: "2rem",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-          alignItems: "center",
-          textAlign: "center",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "0.72rem",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "var(--accent)",
-            fontWeight: 700,
-          }}
-        >
-          Step 5 of 5
-        </span>
-        <h1
-          style={{
-            fontSize: "clamp(1.5rem, 4vw, 2.25rem)",
-            fontWeight: 700,
-            maxWidth: "26ch",
-          }}
-        >
+    <div style={{
+      flex: 1, display: "flex", flexDirection: "column",
+      alignItems: "center", padding: "3rem 1.5rem 4rem", gap: "2.5rem",
+    }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "center", textAlign: "center", maxWidth: 560 }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: "50%",
+          background: "rgba(109,107,245,0.12)", border: "1px solid rgba(109,107,245,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1.35rem", marginBottom: 4,
+        }}>✦</div>
+        <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 700, letterSpacing: "-0.03em", margin: 0, lineHeight: 1.1 }}>
           Your Founder Brain
         </h1>
-        <p
-          style={{
-            color: "var(--muted)",
-            maxWidth: "44ch",
-            lineHeight: 1.65,
-          }}
-        >
-          We extracted {totalFacts} facts about you. Confirm what&apos;s right,
+        <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: "44ch", lineHeight: 1.7, margin: 0, fontSize: "0.95rem" }}>
+          We extracted <strong style={{ color: "#f4f4f5" }}>{totalFacts} facts</strong> about you. Confirm what&apos;s right,
           edit what&apos;s off. Each correction makes Influuc sharper.
         </p>
       </div>
 
       {totalFacts === 0 ? (
-        <div
-          style={{
-            width: "100%",
-            maxWidth: "560px",
-            padding: "2rem",
-            borderRadius: "0.875rem",
-            border: "1px solid rgba(255,255,255,0.1)",
-            background: "rgba(255,255,255,0.03)",
-            textAlign: "center",
-          }}
-        >
-          <p style={{ color: "var(--muted)", marginBottom: "1rem" }}>
+        <div style={{
+          width: "100%", maxWidth: 560, padding: "2rem", borderRadius: 14,
+          border: "1px solid rgba(255,255,255,0.08)", background: "rgba(255,255,255,0.025)", textAlign: "center",
+        }}>
+          <p style={{ color: "rgba(255,255,255,0.4)", marginBottom: "1rem", lineHeight: 1.65, fontSize: "0.9rem" }}>
             No facts were extracted yet. This happens if the analysis job
             hasn&apos;t finished or if Trigger.dev isn&apos;t running locally.
           </p>
-          <a
-            href="/onboarding/analysis"
-            style={{ color: "var(--accent)", fontSize: "0.88rem" }}
-          >
+          <a href="/onboarding/analysis" style={{ color: "#a5b4fc", fontSize: "0.88rem", fontWeight: 500 }}>
             ← Back to analysis
           </a>
         </div>

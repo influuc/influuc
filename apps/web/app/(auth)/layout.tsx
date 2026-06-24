@@ -4,16 +4,19 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div
-      style={{
-        minHeight: "100dvh",
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "1.5rem",
-      }}
-    >
-      {children}
+    <div className="hero-container" style={{
+      minHeight: "100dvh",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "1.5rem",
+      background: "#000",
+    }}>
+      <div className="hero-glow" />
+      <div className="hero-grid-bg" />
+      <div style={{ position: "relative", zIndex: 1, width: "100%" }}>
+        {children}
+      </div>
     </div>
   );
 }

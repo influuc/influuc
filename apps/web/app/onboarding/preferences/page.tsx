@@ -29,43 +29,25 @@ export default async function PreferencesPage({
 
   return (
     <div style={{
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "3rem 1.5rem",
-      gap: "2rem",
-      textAlign: "center",
+      flex: 1, display: "flex", flexDirection: "column",
+      alignItems: "center", padding: "3rem 1.5rem 4rem", gap: "2.5rem",
     }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "center", textAlign: "center", maxWidth: 560 }}>
         {checkout === "success" && (
-          <div style={{
-            padding: "0.5rem 1rem",
-            borderRadius: "0.5rem",
-            background: "rgba(74,222,128,0.1)",
-            border: "1px solid rgba(74,222,128,0.25)",
-            color: "#4ade80",
-            fontSize: "0.82rem",
-            fontWeight: 600,
-            marginBottom: "0.5rem",
-          }}>
-            Trial started — welcome to Influuc!
+          <div className="badge badge-success" style={{ marginBottom: 4 }}>
+            ✓ Trial started — welcome to Influuc!
           </div>
         )}
-        <span style={{
-          fontSize: "0.72rem",
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
-          color: "var(--accent)",
-          fontWeight: 700,
-        }}>
-          Step 5 of 5
-        </span>
-        <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 700, maxWidth: "24ch" }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: "50%",
+          background: "rgba(109,107,245,0.12)", border: "1px solid rgba(109,107,245,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1.35rem", marginBottom: 4,
+        }}>⚙️</div>
+        <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 700, letterSpacing: "-0.03em", margin: 0, lineHeight: 1.1 }}>
           Set up your content strategy
         </h1>
-        <p style={{ color: "var(--muted)", maxWidth: "44ch", lineHeight: 1.65 }}>
+        <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: "44ch", lineHeight: 1.7, margin: 0, fontSize: "0.95rem" }}>
           This tells Influuc what to write about and how. Your first week of posts generates immediately after.
         </p>
       </div>

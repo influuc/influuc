@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
@@ -43,34 +43,19 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
   }
 
   return (
-    <div
-      style={{
-        display: "flex",
-        flexDirection: "column",
-        gap: "1rem",
-        width: "100%",
-        maxWidth: "380px",
-      }}
-    >
+    <div style={{ display: "flex", flexDirection: "column", gap: "0.875rem", width: "100%", maxWidth: "400px" }}>
+
       {error && (
-        <div
-          style={{
-            background: "rgba(239,68,68,0.1)",
-            border: "1px solid rgba(239,68,68,0.3)",
-            borderRadius: "0.5rem",
-            padding: "0.75rem 1rem",
-            fontSize: "0.85rem",
-            color: "#f87171",
-            textAlign: "left",
-          }}
-        >
+        <div style={{
+          padding: "10px 14px", borderRadius: 10,
+          background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.2)",
+          fontSize: "0.85rem", color: "#f87171",
+        }}>
           {humaniseError(error)}
         </div>
       )}
 
-      {/* X (Twitter) */}
       <PlatformCard
-        platform="x"
         label="X (Twitter)"
         icon={<XIcon />}
         connected={xConnected}
@@ -78,9 +63,7 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
         connectHref="/api/oauth/x"
       />
 
-      {/* LinkedIn */}
       <PlatformCard
-        platform="linkedin"
         label="LinkedIn"
         icon={<LinkedInIcon />}
         connected={liConnected}
@@ -88,9 +71,8 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
         connectHref="/api/oauth/linkedin"
       />
 
-      {/* Status hint */}
       {!bothConnected && (
-        <p style={{ fontSize: "0.78rem", color: "var(--muted)", textAlign: "center", lineHeight: 1.5, margin: 0 }}>
+        <p style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.35)", textAlign: "center", lineHeight: 1.6, margin: 0 }}>
           {!xConnected && !liConnected
             ? "Connect both X and LinkedIn to continue."
             : !xConnected
@@ -99,23 +81,11 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
         </p>
       )}
 
-      {/* Continue — requires both */}
       <button
         onClick={() => void handleContinue()}
         disabled={!bothConnected || advancing}
-        style={{
-          marginTop: "0.25rem",
-          padding: "0.875rem 1.5rem",
-          borderRadius: "0.625rem",
-          border: "none",
-          background: bothConnected ? "var(--accent)" : "rgba(255,255,255,0.08)",
-          color: bothConnected ? "#fff" : "var(--muted)",
-          fontWeight: 600,
-          fontSize: "0.95rem",
-          cursor: bothConnected && !advancing ? "pointer" : "not-allowed",
-          transition: "opacity 0.15s",
-          opacity: bothConnected && !advancing ? 1 : 0.5,
-        }}
+        className="btn btn-primary"
+        style={{ width: "100%", justifyContent: "center", marginTop: 4, opacity: !bothConnected || advancing ? 0.45 : 1, cursor: !bothConnected || advancing ? "not-allowed" : "pointer" }}
       >
         {advancing ? "Setting up…" : "Continue →"}
       </button>
@@ -123,77 +93,33 @@ export function ConnectForm({ connections, initialError }: ConnectFormProps) {
   );
 }
 
-/* ─── Platform card ─────────────────────────────────────────────────────────── */
-
-interface PlatformCardProps {
-  platform: string;
+function PlatformCard({
+  label, icon, connected, handle, connectHref,
+}: {
   label: string;
   icon: React.ReactNode;
   connected: boolean;
   handle: string | null;
   connectHref: string;
-}
-
-function PlatformCard({
-  label,
-  icon,
-  connected,
-  handle,
-  connectHref,
-}: PlatformCardProps) {
+}) {
   return (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: "0.875rem",
-        padding: "1rem 1.25rem",
-        borderRadius: "0.75rem",
-        border: connected
-          ? "1px solid rgba(109,107,245,0.4)"
-          : "1px solid rgba(255,255,255,0.1)",
-        background: connected
-          ? "rgba(109,107,245,0.08)"
-          : "rgba(255,255,255,0.03)",
-        color: "var(--fg)",
-      }}
-    >
-      <span style={{ flexShrink: 0, opacity: connected ? 1 : 0.6 }}>{icon}</span>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.15rem", flex: 1, textAlign: "left" }}>
-        <span style={{ fontWeight: 500, fontSize: "0.95rem" }}>{label}</span>
+    <div className={`platform-card ${connected ? "platform-card-connected" : ""}`}>
+      <span style={{ flexShrink: 0, opacity: connected ? 1 : 0.55 }}>{icon}</span>
+      <div style={{ display: "flex", flexDirection: "column", gap: 2, flex: 1 }}>
+        <span style={{ fontWeight: 600, fontSize: "0.925rem" }}>{label}</span>
         {connected && handle ? (
-          <span style={{ fontSize: "0.78rem", color: "var(--accent)" }}>{handle}</span>
+          <span style={{ fontSize: "0.78rem", color: "#a5b4fc" }}>{handle}</span>
         ) : (
-          <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>Not connected</span>
+          <span style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.3)" }}>Not connected</span>
         )}
       </div>
-
-      <a
-        href={connectHref}
-        style={{
-          padding: "0.45rem 1rem",
-          borderRadius: "0.4rem",
-          border: connected
-            ? "1px solid rgba(109,107,245,0.5)"
-            : "1px solid rgba(255,255,255,0.15)",
-          background: "transparent",
-          color: connected ? "var(--accent)" : "var(--fg)",
-          fontSize: "0.8rem",
-          fontWeight: 500,
-          textDecoration: "none",
-          whiteSpace: "nowrap",
-          cursor: "pointer",
-          flexShrink: 0,
-        }}
-      >
+      {connected && <div className="glow-dot glow-dot-success" />}
+      <a href={connectHref} className="btn btn-xs btn-ghost" style={{ flexShrink: 0 }}>
         {connected ? "Re-connect" : "Connect"}
       </a>
     </div>
   );
 }
-
-/* ─── Icons ─────────────────────────────────────────────────────────────────── */
 
 function XIcon() {
   return (
@@ -210,8 +136,6 @@ function LinkedInIcon() {
     </svg>
   );
 }
-
-/* ─── Error humaniser ───────────────────────────────────────────────────────── */
 
 function humaniseError(code: string): string {
   const map: Record<string, string> = {

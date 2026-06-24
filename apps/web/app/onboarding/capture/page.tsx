@@ -42,25 +42,23 @@ export default async function CapturePage() {
 
   return (
     <div style={{
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "center",
-      justifyContent: "center",
-      padding: "3rem 1.5rem",
-      gap: "2rem",
-      textAlign: "center",
+      flex: 1, display: "flex", flexDirection: "column",
+      alignItems: "center", justifyContent: "center",
+      padding: "3rem 1.5rem", gap: "2.5rem", textAlign: "center",
     }}>
-      <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem", alignItems: "center" }}>
-        <span style={{ fontSize: "0.72rem", letterSpacing: "0.2em", textTransform: "uppercase", color: "var(--accent)", fontWeight: 700 }}>
-          Step 3 of 5
-        </span>
-        <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 700, maxWidth: "26ch" }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "center", maxWidth: 480 }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: "50%",
+          background: "rgba(109,107,245,0.12)", border: "1px solid rgba(109,107,245,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1.35rem", marginBottom: 4,
+        }}>📡</div>
+        <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 700, letterSpacing: "-0.03em", margin: 0, lineHeight: 1.1 }}>
           Import your content
         </h1>
-        <p style={{ color: "var(--muted)", maxWidth: "44ch", lineHeight: 1.65 }}>
-          We&apos;ll scan your X posts, LinkedIn activity, and website in the background.
-          Just click scan — tabs open and close automatically.
+        <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: "44ch", lineHeight: 1.7, margin: 0, fontSize: "0.95rem" }}>
+          We&apos;ll scan your X posts, LinkedIn activity, and website so the AI
+          can learn your exact voice. Tabs open and close automatically.
         </p>
       </div>
 

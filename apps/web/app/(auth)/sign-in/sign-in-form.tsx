@@ -5,7 +5,6 @@ import { useState } from "react";
 
 interface SignInFormProps {
   initialError?: string;
-  /** Where to send the user after auth (default: /onboarding/connect). */
   next?: string;
 }
 
@@ -48,30 +47,19 @@ export function SignInForm({ initialError, next = "/onboarding/connect" }: SignI
   if (status === "sent") {
     return (
       <div style={cardStyle}>
-        <div style={{ fontSize: "2.5rem", lineHeight: 1 }}>✉️</div>
-        <h2 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700 }}>
+        <div style={{ fontSize: "2.25rem", lineHeight: 1, filter: "drop-shadow(0 0 16px rgba(109,107,245,0.4))" }}>✉️</div>
+        <h2 style={{ margin: 0, fontSize: "1.35rem", fontWeight: 700, letterSpacing: "-0.025em" }}>
           Check your inbox
         </h2>
-        <p
-          style={{
-            color: "var(--muted)",
-            margin: 0,
-            textAlign: "center",
-            fontSize: "0.9rem",
-            lineHeight: 1.6,
-          }}
-        >
-          We sent a magic link to <strong style={{ color: "var(--fg)" }}>{email}</strong>.
+        <p style={{ color: "rgba(255,255,255,0.45)", margin: 0, textAlign: "center", fontSize: "0.9rem", lineHeight: 1.65 }}>
+          We sent a magic link to{" "}
+          <strong style={{ color: "#f4f4f5", fontWeight: 500 }}>{email}</strong>.
           <br />
-          Click it to continue — no password needed.
+          Click it to sign in — no password needed.
         </p>
         <button
           onClick={() => setStatus("idle")}
-          style={{
-            ...ghostBtnStyle,
-            marginTop: "0.25rem",
-            fontSize: "0.8rem",
-          }}
+          style={{ background: "none", border: "none", color: "rgba(255,255,255,0.4)", cursor: "pointer", fontFamily: "inherit", fontSize: "0.82rem", textDecoration: "underline", textDecorationColor: "rgba(255,255,255,0.2)", marginTop: 4 }}
         >
           Use a different email
         </button>
@@ -82,38 +70,35 @@ export function SignInForm({ initialError, next = "/onboarding/connect" }: SignI
   return (
     <div style={cardStyle}>
       {/* Wordmark */}
-      <span
-        style={{
-          fontSize: "0.72rem",
-          letterSpacing: "0.2em",
-          textTransform: "uppercase",
-          color: "var(--accent)",
-          fontWeight: 700,
-        }}
-      >
-        Influuc
-      </span>
+      <div style={{
+        width: 40, height: 40, borderRadius: "50%",
+        background: "rgba(109,107,245,0.15)",
+        border: "1px solid rgba(109,107,245,0.3)",
+        display: "flex", alignItems: "center", justifyContent: "center",
+        fontSize: "1.1rem", fontWeight: 700, color: "#a5b4fc",
+      }}>
+        ✦
+      </div>
 
-      <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700 }}>
-        Welcome
-      </h1>
-      <p
-        style={{
-          margin: 0,
-          color: "var(--muted)",
-          fontSize: "0.875rem",
-          textAlign: "center",
-        }}
-      >
-        Sign in or create your account — no password required.
-      </p>
+      <div style={{ textAlign: "center", display: "flex", flexDirection: "column", gap: "6px" }}>
+        <h1 style={{ margin: 0, fontSize: "1.5rem", fontWeight: 700, letterSpacing: "-0.025em" }}>
+          Welcome to Influuc
+        </h1>
+        <p style={{ margin: 0, color: "rgba(255,255,255,0.4)", fontSize: "0.875rem" }}>
+          Sign in or create an account — no password required.
+        </p>
+      </div>
 
-      {/* Error banner */}
       {status === "error" && errorMsg && (
-        <div style={errorBannerStyle}>{errorMsg}</div>
+        <div style={{
+          width: "100%", padding: "10px 14px", borderRadius: 10,
+          background: "rgba(248,113,113,0.1)", border: "1px solid rgba(248,113,113,0.2)",
+          color: "#f87171", fontSize: "0.85rem", textAlign: "center",
+        }}>
+          {errorMsg}
+        </div>
       )}
 
-      {/* Magic-link form */}
       <form
         onSubmit={handleMagicLink}
         style={{ display: "flex", flexDirection: "column", gap: "0.75rem", width: "100%" }}
@@ -125,169 +110,64 @@ export function SignInForm({ initialError, next = "/onboarding/connect" }: SignI
           onChange={(e) => setEmail(e.target.value)}
           required
           autoFocus
-          style={inputStyle}
+          className="input"
         />
         <button
           type="submit"
           disabled={status === "loading"}
-          style={{
-            ...primaryBtnStyle,
-            opacity: status === "loading" ? 0.7 : 1,
-          }}
+          className="btn btn-primary"
+          style={{ width: "100%", justifyContent: "center" }}
         >
-          {status === "loading" ? "Sending…" : "Send magic link"}
+          {status === "loading" ? (
+            <><span className="spinner spinner-sm" />Sending…</>
+          ) : (
+            "Send magic link"
+          )}
         </button>
       </form>
 
-      {/* Divider */}
-      <div style={dividerStyle}>
-        <div style={dividerLineStyle} />
-        <span
-          style={{
-            color: "var(--muted)",
-            fontSize: "0.75rem",
-            padding: "0 0.875rem",
-            flexShrink: 0,
-          }}
-        >
-          or
-        </span>
-        <div style={dividerLineStyle} />
+      <div style={{ display: "flex", alignItems: "center", width: "100%", gap: 0 }}>
+        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
+        <span style={{ color: "rgba(255,255,255,0.3)", fontSize: "0.75rem", padding: "0 1rem", flexShrink: 0 }}>or</span>
+        <div style={{ flex: 1, height: 1, background: "rgba(255,255,255,0.07)" }} />
       </div>
 
-      {/* Google OAuth */}
-      <button onClick={handleGoogle} style={secondaryBtnStyle}>
+      <button
+        onClick={handleGoogle}
+        className="btn btn-ghost"
+        style={{ width: "100%", justifyContent: "center" }}
+      >
         <GoogleIcon />
         Continue with Google
       </button>
 
-      <p
-        style={{
-          margin: 0,
-          fontSize: "0.72rem",
-          color: "var(--muted)",
-          textAlign: "center",
-          lineHeight: 1.5,
-        }}
-      >
+      <p style={{ margin: 0, fontSize: "0.72rem", color: "rgba(255,255,255,0.25)", textAlign: "center", lineHeight: 1.5 }}>
         By continuing, you agree to our Terms of Service and Privacy Policy.
       </p>
     </div>
   );
 }
 
-/* ─── Inline SVG ────────────────────────────────────────────────────────────── */
-
 function GoogleIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 18 18" fill="none" aria-hidden>
-      <path
-        d="M17.64 9.2c0-.638-.057-1.252-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908C16.658 14.233 17.64 11.925 17.64 9.2z"
-        fill="#4285F4"
-      />
-      <path
-        d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z"
-        fill="#34A853"
-      />
-      <path
-        d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"
-        fill="#FBBC05"
-      />
-      <path
-        d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z"
-        fill="#EA4335"
-      />
+      <path d="M17.64 9.2c0-.638-.057-1.252-.164-1.84H9v3.481h4.844a4.14 4.14 0 01-1.796 2.716v2.259h2.908C16.658 14.233 17.64 11.925 17.64 9.2z" fill="#4285F4" />
+      <path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 009 18z" fill="#34A853" />
+      <path d="M3.964 10.71A5.41 5.41 0 013.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 000 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05" />
+      <path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 00.957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335" />
     </svg>
   );
 }
 
-/* ─── Styles ────────────────────────────────────────────────────────────────── */
-
 const cardStyle: React.CSSProperties = {
   background: "rgba(255,255,255,0.03)",
   border: "1px solid rgba(255,255,255,0.08)",
-  borderRadius: "1rem",
-  padding: "2.5rem 2rem",
+  borderRadius: "1.25rem",
+  padding: "2.25rem 2rem",
   display: "flex",
   flexDirection: "column",
   gap: "1.25rem",
   alignItems: "center",
   width: "100%",
-  maxWidth: "420px",
-};
-
-const inputStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.75rem 1rem",
-  borderRadius: "0.5rem",
-  border: "1px solid rgba(255,255,255,0.12)",
-  background: "rgba(255,255,255,0.05)",
-  color: "var(--fg)",
-  fontSize: "0.95rem",
-  outline: "none",
-  boxSizing: "border-box",
-  fontFamily: "inherit",
-};
-
-const primaryBtnStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.75rem",
-  borderRadius: "0.5rem",
-  border: "none",
-  background: "var(--accent)",
-  color: "#fff",
-  fontSize: "0.95rem",
-  fontWeight: 600,
-  cursor: "pointer",
-  fontFamily: "inherit",
-  transition: "opacity 150ms",
-};
-
-const secondaryBtnStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.75rem",
-  borderRadius: "0.5rem",
-  border: "1px solid rgba(255,255,255,0.12)",
-  background: "rgba(255,255,255,0.05)",
-  color: "var(--fg)",
-  fontSize: "0.9rem",
-  fontWeight: 500,
-  cursor: "pointer",
-  display: "flex",
-  alignItems: "center",
-  justifyContent: "center",
-  gap: "0.625rem",
-  fontFamily: "inherit",
-};
-
-const ghostBtnStyle: React.CSSProperties = {
-  background: "none",
-  border: "none",
-  color: "var(--muted)",
-  cursor: "pointer",
-  fontFamily: "inherit",
-  textDecoration: "underline",
-};
-
-const dividerStyle: React.CSSProperties = {
-  display: "flex",
-  alignItems: "center",
-  width: "100%",
-};
-
-const dividerLineStyle: React.CSSProperties = {
-  flex: 1,
-  height: "1px",
-  background: "rgba(255,255,255,0.08)",
-};
-
-const errorBannerStyle: React.CSSProperties = {
-  width: "100%",
-  padding: "0.625rem 0.875rem",
-  borderRadius: "0.5rem",
-  background: "rgba(248,113,113,0.1)",
-  border: "1px solid rgba(248,113,113,0.25)",
-  color: "#f87171",
-  fontSize: "0.85rem",
-  textAlign: "center",
+  maxWidth: "400px",
 };

@@ -44,53 +44,30 @@ export default async function ConnectPage({
   ) as Record<string, { handle: string | null; status: string }>;
 
   return (
-    <div
-      style={{
-        flex: 1,
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        justifyContent: "center",
-        padding: "3rem 1.5rem",
-        gap: "2rem",
-        textAlign: "center",
-      }}
-    >
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "0.5rem",
-          alignItems: "center",
-        }}
-      >
-        <span
-          style={{
-            fontSize: "0.72rem",
-            letterSpacing: "0.2em",
-            textTransform: "uppercase",
-            color: "var(--accent)",
-            fontWeight: 700,
-          }}
-        >
-          Step 1 of 5
-        </span>
-        <h1
-          style={{
-            fontSize: "clamp(1.5rem, 4vw, 2.25rem)",
-            fontWeight: 700,
-            maxWidth: "22ch",
-          }}
-        >
+    <div style={{
+      flex: 1,
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "3rem 1.5rem",
+      gap: "2.5rem",
+      textAlign: "center",
+    }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem", alignItems: "center", maxWidth: 480 }}>
+        <div style={{
+          width: 52, height: 52, borderRadius: "50%",
+          background: "rgba(109,107,245,0.12)",
+          border: "1px solid rgba(109,107,245,0.25)",
+          display: "flex", alignItems: "center", justifyContent: "center",
+          fontSize: "1.35rem", marginBottom: 4,
+        }}>
+          🔗
+        </div>
+        <h1 style={{ fontSize: "clamp(1.5rem, 4vw, 2.25rem)", fontWeight: 700, letterSpacing: "-0.03em", margin: 0, lineHeight: 1.1 }}>
           Connect your accounts
         </h1>
-        <p
-          style={{
-            color: "var(--muted)",
-            maxWidth: "42ch",
-            lineHeight: 1.65,
-          }}
-        >
+        <p style={{ color: "rgba(255,255,255,0.45)", maxWidth: "42ch", lineHeight: 1.7, margin: 0, fontSize: "0.95rem" }}>
           Connect X and LinkedIn so Influuc can learn from your existing content
           and post on your behalf — securely, with your approval every step.
         </p>
