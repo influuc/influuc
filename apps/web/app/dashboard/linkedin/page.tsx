@@ -27,8 +27,10 @@ export default async function LinkedInSchedulePage() {
 
   if (!strategy) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
-        <p>No content generated yet. Complete onboarding to generate your first week.</p>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "4rem 2rem" }}>
+        <p style={{ color: "var(--muted)", fontSize: "0.875rem", textAlign: "center", maxWidth: 360, lineHeight: 1.6 }}>
+          No content generated yet. Complete onboarding to generate your first week.
+        </p>
       </div>
     );
   }
@@ -41,55 +43,70 @@ export default async function LinkedInSchedulePage() {
     .eq("platform", "linkedin")
     .order("scheduled_date");
 
-  const approved = (posts ?? []).filter(p => p.status === "approved").length;
+  const approved = (posts ?? []).filter(p => p.status === "approved" || p.status === "published").length;
   const total = (posts ?? []).length;
 
   const strat = strategy.strategy as { summary?: string; ideas?: Array<{ date: string; theme: string }> };
-
   const ideaByDate = new Map((strat.ideas ?? []).map(i => [i.date, i.theme]));
 
   return (
     <div style={{
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      padding: "2rem 1.5rem 4rem",
-      maxWidth: "780px",
+      padding: "2rem 2.5rem 4rem",
+      maxWidth: 800,
       margin: "0 auto",
       width: "100%",
+      display: "flex",
+      flexDirection: "column",
       gap: "2rem",
     }}>
       {/* Header */}
-      <div>
-        <h1 style={{ fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>LinkedIn Schedule</h1>
-        <p style={{ color: "var(--muted)", fontSize: "0.875rem", margin: "0.3rem 0 0" }}>
-          Week of {fmt(strategy.week_start)} · {approved}/{total} approved · 2000+ chars each
-        </p>
-        {strat.summary && (
-          <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", margin: "0.25rem 0 0", fontStyle: "italic" }}>
-            &ldquo;{strat.summary}&rdquo;
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
+        <div>
+          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>LinkedIn</h1>
+          <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: "0.3rem" }}>
+            Week of {fmt(strategy.week_start)}
+            {strat.summary && <> · <span style={{ fontStyle: "italic" }}>{strat.summary}</span></>}
           </p>
-        )}
+        </div>
+        <div style={{
+          display: "flex",
+          alignItems: "center",
+          gap: "0.625rem",
+          padding: "0.4rem 0.875rem",
+          borderRadius: 999,
+          background: approved === total && total > 0 ? "var(--success-bg)" : "var(--card)",
+          border: `1px solid ${approved === total && total > 0 ? "rgba(74,222,128,0.2)" : "var(--border)"}`,
+          flexShrink: 0,
+        }}>
+          <span style={{ fontSize: "0.8rem", fontWeight: 600, color: approved === total && total > 0 ? "var(--success)" : "var(--fg)" }}>
+            {approved}/{total}
+          </span>
+          <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>approved</span>
+        </div>
       </div>
 
-      {/* One post per day */}
+      {/* Posts */}
       {(posts ?? []).map(post => (
-        <section key={post.id}>
-          <div style={{ marginBottom: "0.75rem" }}>
+        <section key={post.id} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <div style={{
+            display: "flex",
+            flexDirection: "column",
+            gap: "0.25rem",
+            paddingBottom: "0.625rem",
+            borderBottom: "1px solid var(--border)",
+          }}>
             <h2 style={{
-              fontSize: "0.78rem",
-              fontWeight: 700,
-              letterSpacing: "0.1em",
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
               textTransform: "uppercase",
-              color: "var(--muted)",
-              margin: "0 0 0.25rem",
-              paddingBottom: "0.5rem",
-              borderBottom: "1px solid rgba(255,255,255,0.06)",
+              color: "var(--muted-2)",
+              margin: 0,
             }}>
               {fmtDay(post.scheduled_date)}
             </h2>
             {ideaByDate.has(post.scheduled_date) && (
-              <p style={{ fontSize: "0.78rem", color: "rgba(109,107,245,0.8)", margin: 0, fontWeight: 500 }}>
+              <p style={{ fontSize: "0.8rem", color: "var(--accent-fg)", margin: 0, fontWeight: 500 }}>
                 {ideaByDate.get(post.scheduled_date)}
               </p>
             )}
@@ -99,7 +116,7 @@ export default async function LinkedInSchedulePage() {
             id={post.id}
             content={post.content}
             postType="linkedin"
-            initialStatus={post.status as "draft" | "approved" | "rejected"}
+            initialStatus={post.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
           />
         </section>
       ))}

@@ -27,9 +27,7 @@ export default async function XSchedulePage() {
 
   if (!strategy) {
     return (
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", color: "var(--muted)" }}>
-        <p>No content generated yet. Complete onboarding to generate your first week.</p>
-      </div>
+      <EmptyState message="No content generated yet. Complete onboarding to generate your first week." />
     );
   }
 
@@ -43,66 +41,68 @@ export default async function XSchedulePage() {
     .order("sort_order");
 
   const byDay = groupByDay(posts ?? []);
-  const approved = (posts ?? []).filter(p => p.status === "approved").length;
+  const approved = (posts ?? []).filter(p => p.status === "approved" || p.status === "published").length;
   const total = (posts ?? []).length;
+  const pct = total > 0 ? Math.round((approved / total) * 100) : 0;
 
   const strat = strategy.strategy as { summary?: string };
 
   return (
     <div style={{
-      flex: 1,
-      display: "flex",
-      flexDirection: "column",
-      padding: "2rem 1.5rem 4rem",
-      maxWidth: "960px",
+      padding: "2rem 2.5rem 4rem",
+      maxWidth: 1000,
       margin: "0 auto",
       width: "100%",
+      display: "flex",
+      flexDirection: "column",
       gap: "2rem",
     }}>
-      {/* Page header */}
-      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", flexWrap: "wrap", gap: "0.75rem" }}>
+      {/* Header */}
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
         <div>
-          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, margin: 0 }}>X Schedule</h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.875rem", margin: "0.3rem 0 0" }}>
-            Week of {fmt(strategy.week_start)} · {approved}/{total} approved
+          <h1 style={{ fontSize: "1.4rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>X Posts</h1>
+          <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: "0.3rem" }}>
+            Week of {fmt(strategy.week_start)}
+            {strat.summary && <> · <span style={{ fontStyle: "italic" }}>{strat.summary}</span></>}
           </p>
-          {strat.summary && (
-            <p style={{ color: "rgba(255,255,255,0.5)", fontSize: "0.82rem", margin: "0.25rem 0 0", fontStyle: "italic" }}>
-              &ldquo;{strat.summary}&rdquo;
-            </p>
-          )}
         </div>
-        <div style={{ display: "flex", gap: "0.5rem" }}>
-          <ApproveAllBtn total={total} approved={approved} />
+        <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", flexShrink: 0 }}>
+          <ProgressPill approved={approved} total={total} pct={pct} />
         </div>
       </div>
 
       {/* Days */}
       {byDay.map(({ date, shorts, longs }) => (
-        <section key={date}>
-          <h2 style={{
-            fontSize: "0.78rem",
-            fontWeight: 700,
-            letterSpacing: "0.1em",
-            textTransform: "uppercase",
-            color: "var(--muted)",
-            margin: "0 0 0.75rem",
-            paddingBottom: "0.5rem",
-            borderBottom: "1px solid rgba(255,255,255,0.06)",
+        <section key={date} style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+          <div style={{
+            display: "flex",
+            alignItems: "center",
+            gap: "0.75rem",
+            paddingBottom: "0.625rem",
+            borderBottom: "1px solid var(--border)",
           }}>
-            {fmtDay(date)}
-          </h2>
+            <h2 style={{
+              fontSize: "0.75rem",
+              fontWeight: 600,
+              letterSpacing: "0.06em",
+              textTransform: "uppercase",
+              color: "var(--muted-2)",
+              margin: 0,
+            }}>
+              {fmtDay(date)}
+            </h2>
+          </div>
 
-          {/* Short posts — 2 col grid */}
+          {/* Short posts — 2 col */}
           {shorts.length > 0 && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem", marginBottom: "0.75rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
               {shorts.map(p => (
                 <PostCard
                   key={p.id}
                   id={p.id}
                   content={p.content}
                   postType="x_short"
-                  initialStatus={p.status as "draft" | "approved" | "rejected"}
+                  initialStatus={p.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
                   sortOrder={p.sort_order}
                 />
               ))}
@@ -116,11 +116,48 @@ export default async function XSchedulePage() {
               id={p.id}
               content={p.content}
               postType="x_long"
-              initialStatus={p.status as "draft" | "approved" | "rejected"}
+              initialStatus={p.status as "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed"}
             />
           ))}
         </section>
       ))}
+    </div>
+  );
+}
+
+function ProgressPill({ approved, total, pct }: { approved: number; total: number; pct: number }) {
+  const allDone = total > 0 && approved === total;
+  return (
+    <div style={{
+      display: "flex",
+      alignItems: "center",
+      gap: "0.625rem",
+      padding: "0.4rem 0.875rem",
+      borderRadius: 999,
+      background: allDone ? "var(--success-bg)" : "var(--card)",
+      border: `1px solid ${allDone ? "rgba(74,222,128,0.2)" : "var(--border)"}`,
+    }}>
+      <span style={{ fontSize: "0.8rem", fontWeight: 600, color: allDone ? "var(--success)" : "var(--fg)" }}>
+        {approved}/{total}
+      </span>
+      <span style={{ fontSize: "0.75rem", color: "var(--muted)" }}>approved</span>
+      {allDone && <span style={{ fontSize: "0.75rem", color: "var(--success)" }}>✓</span>}
+    </div>
+  );
+}
+
+function EmptyState({ message }: { message: string }) {
+  return (
+    <div style={{
+      flex: 1,
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: "4rem 2rem",
+    }}>
+      <p style={{ color: "var(--muted)", fontSize: "0.875rem", textAlign: "center", maxWidth: 360, lineHeight: 1.6 }}>
+        {message}
+      </p>
     </div>
   );
 }
@@ -143,15 +180,4 @@ function fmt(d: string) {
 
 function fmtDay(d: string) {
   return new Date(d + "T00:00:00Z").toLocaleDateString("en-US", { weekday: "long", month: "short", day: "numeric", timeZone: "UTC" });
-}
-
-function ApproveAllBtn({ total, approved }: { total: number; approved: number }) {
-  if (approved === total && total > 0) {
-    return (
-      <span style={{ fontSize: "0.8rem", color: "#4ade80", fontWeight: 600 }}>
-        ✓ All {total} posts approved
-      </span>
-    );
-  }
-  return null;
 }
