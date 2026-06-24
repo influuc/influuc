@@ -11,11 +11,11 @@ if (typeof globalThis.WebSocket === "undefined") {
   };
 }
 
-// UTC hour when each post type + sort_order should go out
+// UTC hours matching IST targets: 9 AM IST=UTC 3, 1 PM IST=UTC 7, 7 PM IST=UTC 13, 9:30 AM IST=UTC 4
 const SLOT_HOURS: Record<string, Record<number, number>> = {
-  x_short:  { 0: 9, 1: 14 },
-  x_long:   { 2: 19 },
-  linkedin: { 0: 10 },
+  x_short:  { 0: 3, 1: 7 },
+  x_long:   { 2: 13 },
+  linkedin: { 0: 4 },
 };
 
 function slotHour(postType: string, sortOrder: number): number | null {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updatePostStatus, updatePostContent } from "./actions";
+import { updatePostStatus, updatePostContent, regeneratePost } from "./actions";
 
 export type PostStatus = "draft" | "approved" | "rejected" | "published" | "scheduled" | "failed";
 export type PostType = "x_short" | "x_long" | "linkedin";
@@ -51,12 +51,13 @@ export function PostCard({
   scheduledDate,
   mode = "manual",
 }: PostCardProps) {
-  const [status, setStatus]       = useState<PostStatus>(initialStatus);
-  const [content, setContent]     = useState(initialContent);
-  const [editing, setEditing]     = useState(false);
-  const [editDraft, setEditDraft] = useState(initialContent);
-  const [toast, setToast]         = useState<string | null>(null);
-  const [isPending, startTransition] = useTransition();
+  const [status, setStatus]           = useState<PostStatus>(initialStatus);
+  const [content, setContent]         = useState(initialContent);
+  const [editing, setEditing]         = useState(false);
+  const [editDraft, setEditDraft]     = useState(initialContent);
+  const [toast, setToast]             = useState<string | null>(null);
+  const [regenerating, setRegenerating] = useState(false);
+  const [isPending, startTransition]  = useTransition();
 
   const isShort    = postType === "x_short";
   const isLinkedIn = postType === "linkedin";
@@ -80,7 +81,31 @@ export function PostCard({
       setToast(msg);
       setTimeout(() => setToast(null), 2800);
     }
+    if (next === "rejected") {
+      // Auto-trigger regeneration when rejecting
+      handleRegenerate();
+      return;
+    }
     startTransition(async () => { await updatePostStatus(id, next); });
+  }
+
+  function handleRegenerate() {
+    setRegenerating(true);
+    setToast("Regenerating…");
+    startTransition(async () => {
+      try {
+        await updatePostStatus(id, "rejected");
+        await regeneratePost(id);
+        setStatus("draft");
+        setToast("New version ready");
+        setTimeout(() => setToast(null), 2800);
+      } catch {
+        setToast("Regeneration failed");
+        setTimeout(() => setToast(null), 3000);
+      } finally {
+        setRegenerating(false);
+      }
+    });
   }
 
   function saveEdit() {
@@ -260,26 +285,34 @@ export function PostCard({
         /* MANUAL + AUTOMATIC — require approval */
         ) : (
           <>
-            <button className="post-btn post-btn-edit" onClick={() => setEditing(true)}>
+            <button className="post-btn post-btn-edit" onClick={() => setEditing(true)} disabled={isPending || regenerating}>
               Edit
+            </button>
+            <button
+              className="post-btn post-btn-ghost"
+              onClick={handleRegenerate}
+              disabled={isPending || regenerating}
+              title="Generate a new version of this post"
+            >
+              {regenerating ? "…" : "↺"}
             </button>
             <div style={{ flex: 1 }} />
             {approved && (
-              <button className="post-btn post-btn-ghost" onClick={() => setStatusOpt("draft")} disabled={isPending}>
+              <button className="post-btn post-btn-ghost" onClick={() => setStatusOpt("draft")} disabled={isPending || regenerating}>
                 Undo
               </button>
             )}
-            {rejected && (
-              <button className="post-btn post-btn-ghost" onClick={() => setStatusOpt("draft")} disabled={isPending}>
-                Restore
-              </button>
-            )}
-            {!approved && !rejected && (
+            {!approved && (
               <>
-                <button className="post-btn post-btn-reject" onClick={() => setStatusOpt("rejected")} disabled={isPending}>
-                  Reject
+                <button
+                  className="post-btn post-btn-reject"
+                  onClick={() => setStatusOpt("rejected")}
+                  disabled={isPending || regenerating}
+                  title="Reject and auto-generate a replacement"
+                >
+                  {regenerating ? "Generating…" : "✕ Reject"}
                 </button>
-                <button className="post-btn post-btn-approve" onClick={() => setStatusOpt("approved")} disabled={isPending}>
+                <button className="post-btn post-btn-approve" onClick={() => setStatusOpt("approved")} disabled={isPending || regenerating}>
                   ✓ Approve
                 </button>
               </>

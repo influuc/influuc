@@ -2,6 +2,7 @@ import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { SettingsForm } from "./settings-form";
+import { RegenerateWeekBtn } from "./regenerate-week-btn";
 
 export default async function SettingsPage() {
   let founder;
@@ -44,6 +45,17 @@ export default async function SettingsPage() {
         initialProhibitedTopics={prefs?.prohibited_topics ?? []}
         initialExtraNotes={prefs?.extra_notes ?? ""}
       />
+
+      {/* Divider */}
+      <div style={{ height: 1, background: "var(--border)" }} />
+
+      {/* Content generation */}
+      <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        <p style={{ fontSize: "0.7rem", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", color: "var(--muted)", margin: 0 }}>
+          Content Generation
+        </p>
+        <RegenerateWeekBtn />
+      </div>
     </div>
   );
 }

@@ -53,7 +53,7 @@ export function LinkedInPostList({ posts, mode, ideas }: LinkedInPostListProps) 
 
   const tabs: { id: Filter; label: string }[] = [
     { id: "all",       label: "All" },
-    { id: "draft",     label: "Needs Review" },
+    ...(mode !== "autopilot" ? [{ id: "draft" as Filter, label: "Needs Review" }] : []),
     { id: "approved",  label: "Approved" },
     { id: "published", label: "Published" },
   ];

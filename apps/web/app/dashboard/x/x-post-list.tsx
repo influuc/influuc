@@ -66,7 +66,7 @@ export function XPostList({ posts, mode }: XPostListProps) {
 
   const tabs: { id: Filter; label: string }[] = [
     { id: "all",       label: "All" },
-    { id: "draft",     label: "Needs Review" },
+    ...(mode !== "autopilot" ? [{ id: "draft" as Filter, label: "Needs Review" }] : []),
     { id: "approved",  label: "Approved" },
     { id: "published", label: "Published" },
   ];
@@ -190,9 +190,9 @@ export function XPostList({ posts, mode }: XPostListProps) {
               )}
             </div>
 
-            {/* Short posts — 2-col grid */}
+            {/* Short posts — 2-col grid (stacks on mobile) */}
             {shorts.length > 0 && (
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div className="x-short-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                 {shorts.map(p => (
                   <PostCard
                     key={p.id}

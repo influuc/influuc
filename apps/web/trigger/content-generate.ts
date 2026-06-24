@@ -327,6 +327,40 @@ Return ONLY valid JSON:
       if (insertErr) throw new Error(`Failed to insert posts: ${insertErr.message}`);
     }
 
+    // Set next_generation_at to next week if it's not already scheduled.
+    // This ensures week 2+ auto-generation works via content-weekly-cron.
+    const { data: founderRow } = await db
+      .from("founders")
+      .select("next_generation_at, account_id")
+      .eq("id", founderId)
+      .single();
+
+    if (!founderRow?.next_generation_at) {
+      const nextWeek = addDays(weekStart, 7);
+      await db.from("founders").update({ next_generation_at: nextWeek + "T00:00:00Z" }).eq("id", founderId);
+      logger.info("content.generate: scheduled next generation", { nextWeek });
+    }
+
+    // Email the founder their content is ready
+    try {
+      if (founderRow?.account_id && process.env.RESEND_API_KEY) {
+        const { data: authData } = await db.auth.admin.getUserById(founderRow.account_id);
+        const email = authData?.user?.email;
+        if (email) {
+          const { Resend } = await import("resend");
+          const resend = new Resend(process.env.RESEND_API_KEY);
+          await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL ?? "Influuc <onboarding@resend.dev>",
+            to: [email],
+            subject: "Your weekly content is ready",
+            text: `Your Influuc content for the week of ${weekStart} is ready — ${postsToInsert.length} posts generated across X and LinkedIn.\n\nReview and approve: https://influuc.com/dashboard/x`,
+          });
+        }
+      }
+    } catch (emailErr) {
+      logger.warn("content.generate: email failed (non-fatal)", { err: String(emailErr) });
+    }
+
     logger.info("content.generate: done", { strategyId, postsInserted: postsToInsert.length });
 
     return {

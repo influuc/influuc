@@ -96,15 +96,61 @@ export const postPublish = task({
   maxDuration: 60,
   retry: { maxAttempts: 3, minTimeoutInMs: 5000, maxTimeoutInMs: 60000, factor: 2 },
 
-  // After all retries exhausted, mark the post as failed so the founder can see it
+  // After all retries exhausted, mark the post as failed + mark connection as needs_reauth if it's a token error
   handleError: async ({ payload, error }) => {
     const db = createDb();
+    const errStr = String(error);
+
+    // Get post details for platform + founder
+    const { data: post } = await db
+      .from("weekly_posts")
+      .select("platform, founder_id, scheduled_date")
+      .eq("id", payload.postId)
+      .single();
+
     await db
       .from("weekly_posts")
       .update({ status: "failed" })
       .eq("id", payload.postId)
       .eq("status", "scheduled");
-    logger.error("post.publish: permanently failed", { postId: payload.postId, error: String(error) });
+
+    // If token-related error, mark connection so the reauth banner appears
+    if (post && (errStr.includes("token refresh failed") || errStr.includes("invalid_client") || errStr.includes("No active"))) {
+      await db
+        .from("platform_connections")
+        .update({ status: "needs_reauth" })
+        .eq("founder_id", post.founder_id)
+        .eq("platform", post.platform as "x" | "linkedin");
+      logger.warn("post.publish: marked connection needs_reauth", { platform: post.platform, founderId: post.founder_id });
+    }
+
+    // Email the founder about the failure
+    try {
+      if (post && process.env.RESEND_API_KEY) {
+        const { data: founderRow } = await db.from("founders").select("account_id").eq("id", post.founder_id).single();
+        if (founderRow?.account_id) {
+          const { data: authData } = await db.auth.admin.getUserById(founderRow.account_id);
+          const email = authData?.user?.email;
+          if (email) {
+            const { Resend } = await import("resend");
+            const resend = new Resend(process.env.RESEND_API_KEY);
+            const isTokenError = errStr.includes("token refresh failed") || errStr.includes("invalid_client");
+            await resend.emails.send({
+              from: process.env.RESEND_FROM_EMAIL ?? "Influuc <onboarding@resend.dev>",
+              to: [email],
+              subject: `Post failed to publish on ${post.platform === "x" ? "X" : "LinkedIn"}`,
+              text: isTokenError
+                ? `Your ${post.platform === "x" ? "X" : "LinkedIn"} connection needs to be reconnected — a scheduled post for ${post.scheduled_date} failed to publish.\n\nReconnect here: https://influuc.com/dashboard/settings`
+                : `A post scheduled for ${post.scheduled_date} on ${post.platform === "x" ? "X" : "LinkedIn"} failed to publish.\n\nError: ${errStr.slice(0, 200)}\n\nRetry it here: https://influuc.com/dashboard/${post.platform === "x" ? "x" : "linkedin"}`,
+            });
+          }
+        }
+      }
+    } catch (emailErr) {
+      logger.warn("post.publish: failure email error (non-fatal)", { err: String(emailErr) });
+    }
+
+    logger.error("post.publish: permanently failed", { postId: payload.postId, error: errStr });
   },
 
   run: async (payload: PostPublishPayload) => {

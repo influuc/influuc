@@ -55,6 +55,29 @@ export const contentWeeklyCron = schedules.task({
         continue;
       }
 
+      // Email the founder that their reflection is due
+      try {
+        if (process.env.RESEND_API_KEY) {
+          const { data: founderRow } = await db.from("founders").select("account_id").eq("id", founder.id).single();
+          if (founderRow?.account_id) {
+            const { data: authData } = await db.auth.admin.getUserById(founderRow.account_id);
+            const email = authData?.user?.email;
+            if (email) {
+              const { Resend } = await import("resend");
+              const resend = new Resend(process.env.RESEND_API_KEY);
+              await resend.emails.send({
+                from: process.env.RESEND_FROM_EMAIL ?? "Influuc <onboarding@resend.dev>",
+                to: [email],
+                subject: "Time for your weekly reflection",
+                text: `It's time to fill in your weekly reflection so Influuc can generate next week's content.\n\nTake 2 minutes here: https://influuc.com/dashboard`,
+              });
+            }
+          }
+        }
+      } catch (emailErr) {
+        logger.warn("content.weekly-cron: reflection email failed (non-fatal)", { founderId: founder.id, err: String(emailErr) });
+      }
+
       logger.info("content.weekly-cron: reflection flagged", { founderId: founder.id });
       flagged++;
     }

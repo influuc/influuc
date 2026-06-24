@@ -48,19 +48,29 @@ const navItems = [
       </svg>
     ),
   },
+  {
+    href: "/dashboard/history",
+    label: "History",
+    exact: false,
+    icon: (
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+        <circle cx="12" cy="12" r="10" />
+        <polyline points="12 6 12 12 16 14" />
+      </svg>
+    ),
+  },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
 
   return (
-    <aside style={{
+    <aside className="sidebar-desktop" style={{
       position: "fixed",
       top: 0, left: 0, bottom: 0,
       width: 220,
       background: "var(--sidebar-bg)",
       borderRight: "1px solid var(--border)",
-      display: "flex",
       flexDirection: "column",
       zIndex: 50,
     }}>
