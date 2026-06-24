@@ -84,7 +84,7 @@ const NAV_MAIN = [
 
 export function Sidebar({ firstName = "", email = "", draftX = 0, draftLinkedIn = 0 }: SidebarProps) {
   const pathname = usePathname();
-  const initials = firstName ? firstName[0].toUpperCase() : email ? email[0].toUpperCase() : "?";
+  const initials = firstName ? firstName.charAt(0).toUpperCase() : email ? email.charAt(0).toUpperCase() : "?";
 
   const badges: Record<string, number> = { x: draftX, linkedin: draftLinkedIn };
 
