@@ -1,9 +1,17 @@
 "use server";
 
 import { createServiceClient } from "@/lib/supabase/service";
+import { createClient } from "@/lib/supabase/server";
 import { getCurrentFounder } from "@/lib/founder";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { tasks } from "@trigger.dev/sdk/v3";
+
+export async function signOutAction() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/sign-in");
+}
 
 export async function updatePostStatus(postId: string, status: "approved" | "rejected" | "draft") {
   const founder = await getCurrentFounder();

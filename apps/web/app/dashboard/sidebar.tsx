@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { signOutAction } from "./actions";
 
 const NAV_MAIN = [
   {
@@ -167,13 +168,15 @@ export function Sidebar() {
             <span style={{ fontSize: "0.855rem", fontWeight: pathname.startsWith("/dashboard/settings") ? 600 : 400, letterSpacing: "-0.01em" }}>Settings</span>
           </div>
         </Link>
-        <Link href="/sign-out" style={{ textDecoration: "none" }}>
-          <div style={{
+        <form action={signOutAction}>
+          <button type="submit" style={{
             display: "flex", alignItems: "center", gap: "0.625rem",
             padding: "0.55rem 0.75rem", borderRadius: 9,
             color: "var(--muted-2)",
             transition: "background 0.12s, color 0.12s",
             cursor: "pointer",
+            background: "none", border: "none", width: "100%",
+            fontFamily: "inherit", textAlign: "left",
           }}>
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
               <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
@@ -181,8 +184,8 @@ export function Sidebar() {
               <line x1="21" y1="12" x2="9" y2="12" />
             </svg>
             <span style={{ fontSize: "0.855rem", letterSpacing: "-0.01em" }}>Sign Out</span>
-          </div>
-        </Link>
+          </button>
+        </form>
       </div>
     </aside>
   );
