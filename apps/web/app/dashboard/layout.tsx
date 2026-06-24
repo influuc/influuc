@@ -24,12 +24,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
     if (account) {
       const { data: founder } = await db
         .from("founders")
-        .select("id, first_name")
+        .select("id, display_name")
         .eq("account_id", account.id)
         .single();
 
       if (founder) {
-        firstName = founder.first_name ?? "";
+        firstName = founder.display_name ?? "";
         const { data: drafts } = await db
           .from("weekly_posts")
           .select("platform")
