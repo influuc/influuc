@@ -21,6 +21,7 @@ function Nav() {
     { href: "/dashboard", label: "Overview" },
     { href: "/dashboard/x", label: "X Posts" },
     { href: "/dashboard/linkedin", label: "LinkedIn" },
+    { href: "/dashboard/settings", label: "Settings" },
   ];
 
   return (

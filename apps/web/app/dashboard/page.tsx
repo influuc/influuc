@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import { ReflectionBanner } from "./reflection-banner";
+import { ReauthBanner } from "./reauth-banner";
 
 export default async function DashboardPage() {
   let founder;
@@ -69,6 +70,9 @@ export default async function DashboardPage() {
           {factCount ? `${factCount} brain facts · Mode: ${prefs?.mode ?? "assisted"}` : "Brain ready"}
         </p>
       </div>
+
+      {/* Platform reauth warnings */}
+      <ReauthBanner founderId={founder.id} />
 
       {/* Weekly reflection prompt */}
       {founder.reflection_pending && <ReflectionBanner />}
