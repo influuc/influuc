@@ -27,7 +27,7 @@ const POSTS_MODEL    = "anthropic/claude-haiku-4-5";
 
 export type ContentGeneratePayload = {
   founderId: string;
-  weekStart: string; // "YYYY-MM-DD" — Monday of the target week
+  weekStart: string; // "YYYY-MM-DD" — first day of the 7-day window (signup day or reflection day)
 };
 
 interface StrategyIdea {
@@ -195,7 +195,7 @@ CONTENT PREFERENCES:
 ${extraNotes ? `- Extra notes: ${extraNotes}` : ""}
 ${reflectionBlock}
 
-Generate a weekly content strategy for the week starting ${weekStart} (Monday through Sunday, 7 days).
+Generate a content strategy for 7 consecutive days starting ${weekStart} (days: ${weekStart} through ${addDays(weekStart, 6)}).
 
 Each day needs ONE strong, distinct content idea. Ideas must:
 - Be grounded in the founder's actual brain facts and expertise
@@ -220,7 +220,7 @@ Return ONLY valid JSON (no markdown, no explanation):
   ]
 }
 
-The ideas array must have exactly 7 entries (day 1 = ${weekStart}, day 2 = ${addDays(weekStart, 1)}, ..., day 7 = ${addDays(weekStart, 6)}).`;
+The ideas array must have exactly 7 entries starting from the provided start date (day 1 = ${weekStart}, day 2 = ${addDays(weekStart, 1)}, ..., day 7 = ${addDays(weekStart, 6)}). Use the exact dates — do NOT snap to Monday.`;
 
     const strategyRaw = await callOpenRouter(STRATEGY_MODEL, strategyPrompt, strategySystem);
     logger.info("content.generate: strategy raw", { preview: strategyRaw.slice(0, 300) });
