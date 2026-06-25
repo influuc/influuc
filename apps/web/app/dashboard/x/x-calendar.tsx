@@ -73,7 +73,7 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
   post: Post;
   localStatus: string;
   onClose: () => void;
-  onStatusChange: (s: "approved" | "rejected") => void;
+  onStatusChange: (s: "approved" | "rejected" | "draft") => void;
 }) {
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
@@ -84,10 +84,11 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
     weekday: "long", month: "long", day: "numeric", timeZone: "UTC",
   });
 
-  function handleStatus(newStatus: "approved" | "rejected") {
+  function handleStatus(newStatus: "approved" | "rejected" | "draft") {
     startTransition(async () => {
       await updatePostStatus(post.id, newStatus);
       onStatusChange(newStatus);
+      if (newStatus === "approved") onClose();
     });
   }
 
@@ -98,8 +99,10 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
     });
   }
 
-  const isDone = localStatus === "approved" || localStatus === "published";
-  const isRejected = localStatus === "rejected";
+  const isScheduled = localStatus === "approved" || localStatus === "scheduled";
+  const isPublished = localStatus === "published";
+  const isRejected  = localStatus === "rejected";
+  const isDraft     = localStatus === "draft";
 
   return (
     <>
@@ -117,6 +120,7 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
         background: "#0f0f1e", borderRadius: 20, zIndex: 201,
         boxShadow: "0 32px 100px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06)",
       }}>
+        {/* Header */}
         <div style={{
           padding: "1.125rem 1.25rem",
           display: "flex", alignItems: "center", gap: "0.75rem",
@@ -137,6 +141,22 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
               {time} · {getTypeName(post.post_type)}
             </p>
           </div>
+          {/* Status pill in header */}
+          {isScheduled && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "rgba(74,222,128,0.12)", color: "#4ade80", flexShrink: 0 }}>
+              Scheduled
+            </span>
+          )}
+          {isPublished && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "rgba(165,180,252,0.12)", color: "#a5b4fc", flexShrink: 0 }}>
+              Published
+            </span>
+          )}
+          {isRejected && (
+            <span style={{ fontSize: "0.65rem", fontWeight: 700, padding: "3px 9px", borderRadius: 99, background: "rgba(248,113,113,0.12)", color: "#f87171", flexShrink: 0 }}>
+              Rejected
+            </span>
+          )}
           <button onClick={onClose} style={{
             background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8,
             width: 28, height: 28, cursor: "pointer", color: "var(--muted)",
@@ -145,11 +165,8 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
           }}>✕</button>
         </div>
 
-        <div style={{ padding: "1rem 1.25rem 0.75rem" }}>
-          <p style={{
-            fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.12em",
-            textTransform: "uppercase", color: "var(--muted-2)", margin: "0 0 0.75rem",
-          }}>Platform Preview</p>
+        {/* Post preview */}
+        <div style={{ padding: "1rem 1.25rem" }}>
           <div style={{
             background: "#000", borderRadius: 14, padding: "1rem 1.125rem",
             border: "1px solid rgba(255,255,255,0.07)",
@@ -165,6 +182,19 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
                 <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>You</p>
                 <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", margin: 0 }}>@you · 1m</p>
               </div>
+              {/* Copy icon — small, unobtrusive */}
+              <button onClick={handleCopy} title="Copy text" style={{
+                marginLeft: "auto", background: "none", border: "none", cursor: "pointer",
+                color: copied ? "#4ade80" : "rgba(255,255,255,0.25)",
+                fontSize: "0.7rem", fontWeight: 600, transition: "color 0.2s",
+                padding: "4px",
+              }}>
+                {copied ? "✓" : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="9" y="9" width="13" height="13" rx="2" /><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+                  </svg>
+                )}
+              </button>
             </div>
             <p style={{
               fontSize: "0.875rem", color: "#e7e9ea", lineHeight: 1.65, margin: 0,
@@ -173,39 +203,52 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
           </div>
         </div>
 
-        <div style={{ padding: "0.75rem 1.25rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          <button onClick={handleCopy} style={{
-            width: "100%", padding: "0.7rem",
-            background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 10,
-            color: copied ? "var(--success)" : "var(--fg)",
-            fontSize: "0.82rem", fontWeight: 600, cursor: "pointer",
-            display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
-            transition: "color 0.2s",
-          }}>
-            {copied ? "✓ Copied!" : "Copy Content"}
-          </button>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button onClick={() => handleStatus("rejected")} disabled={isPending || isRejected} style={{
-              flex: 1, padding: "0.7rem", border: "none", borderRadius: 10,
-              background: isRejected ? "rgba(248,113,113,0.15)" : "rgba(255,255,255,0.05)",
-              color: isRejected ? "#f87171" : "var(--muted)",
+        {/* Footer — status-aware actions only */}
+        {isDraft && (
+          <div style={{ padding: "0 1.25rem 1.25rem", display: "flex", gap: "0.5rem" }}>
+            <button onClick={() => handleStatus("rejected")} disabled={isPending} style={{
+              flex: 1, padding: "0.75rem", border: "none", borderRadius: 10,
+              background: "rgba(255,255,255,0.05)", color: "var(--muted)",
               fontSize: "0.82rem", fontWeight: 600, cursor: isPending ? "wait" : "pointer",
-              opacity: isPending ? 0.6 : 1, transition: "all 0.15s",
-            }}>
-              {isRejected ? "✓ Rejected" : "Reject"}
-            </button>
-            <button onClick={() => handleStatus("approved")} disabled={isPending || isDone} style={{
-              flex: 2, padding: "0.7rem", border: "none", borderRadius: 10,
-              background: isDone ? "rgba(74,222,128,0.15)" : "rgba(109,107,245,0.85)",
-              color: isDone ? "#4ade80" : "#fff",
+              opacity: isPending ? 0.6 : 1,
+            }}>Reject</button>
+            <button onClick={() => handleStatus("approved")} disabled={isPending} style={{
+              flex: 2, padding: "0.75rem", border: "none", borderRadius: 10,
+              background: "rgba(109,107,245,0.85)", color: "#fff",
               fontSize: "0.82rem", fontWeight: 700, cursor: isPending ? "wait" : "pointer",
-              boxShadow: isDone ? "none" : "0 0 20px rgba(109,107,245,0.35)",
-              opacity: isPending ? 0.6 : 1, transition: "all 0.15s",
+              boxShadow: "0 0 20px rgba(109,107,245,0.35)",
+              opacity: isPending ? 0.6 : 1,
             }}>
-              {isDone ? "✓ Approved" : "Approve"}
+              {isPending ? "Approving…" : "Approve →"}
             </button>
           </div>
-        </div>
+        )}
+
+        {isRejected && (
+          <div style={{ padding: "0 1.25rem 1.25rem" }}>
+            <button onClick={() => handleStatus("approved")} disabled={isPending} style={{
+              width: "100%", padding: "0.75rem", border: "none", borderRadius: 10,
+              background: "rgba(109,107,245,0.85)", color: "#fff",
+              fontSize: "0.82rem", fontWeight: 700, cursor: isPending ? "wait" : "pointer",
+              opacity: isPending ? 0.6 : 1,
+            }}>
+              {isPending ? "Approving…" : "Approve anyway"}
+            </button>
+          </div>
+        )}
+
+        {isScheduled && (
+          <div style={{ padding: "0 1.25rem 1.25rem" }}>
+            <button onClick={() => handleStatus("draft")} disabled={isPending} style={{
+              width: "100%", padding: "0.75rem", border: "none", borderRadius: 10,
+              background: "rgba(255,255,255,0.05)", color: "var(--muted)",
+              fontSize: "0.82rem", fontWeight: 500, cursor: isPending ? "wait" : "pointer",
+              opacity: isPending ? 0.6 : 1,
+            }}>
+              {isPending ? "Unscheduling…" : "Unschedule"}
+            </button>
+          </div>
+        )}
       </div>
     </>
   );
@@ -352,7 +395,7 @@ export function XCalendar({ posts, strategyId }: { posts: Post[]; strategyId: st
           post={selected}
           localStatus={getStatus(selected)}
           onClose={() => setSelected(null)}
-          onStatusChange={s => setLocalStatuses(prev => ({ ...prev, [selected.id]: s }))}
+          onStatusChange={(s: "approved" | "rejected" | "draft") => setLocalStatuses(prev => ({ ...prev, [selected.id]: s }))}
         />
       )}
     </>
