@@ -53,6 +53,7 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 function statusLabel(status: string) {
+  if (status === "draft")     return "Needs Review";
   if (status === "approved")  return "Scheduled";
   if (status === "published") return "Published";
   if (status === "rejected")  return "Rejected";
@@ -213,26 +214,13 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
 export function XCalendar({ posts, strategyId }: { posts: Post[]; strategyId: string }) {
   const [selected, setSelected] = useState<Post | null>(null);
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
-  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
   const [approvingAll, startApprovingAll] = useTransition();
-  const [, startInline] = useTransition();
 
   const getStatus = (p: Post) => localStatuses[p.id] ?? p.status;
   const groups = groupByDate(posts);
   const draftCount = posts.filter(p => getStatus(p) === "draft").length;
   const scheduled = posts.filter(p => ["approved", "scheduled"].includes(getStatus(p))).length;
   const published = posts.filter(p => getStatus(p) === "published").length;
-
-  function handleInlineStatus(postId: string, newStatus: "approved" | "rejected", e: React.MouseEvent) {
-    e.stopPropagation();
-    if (pendingIds.has(postId)) return;
-    setPendingIds(prev => new Set([...prev, postId]));
-    setLocalStatuses(prev => ({ ...prev, [postId]: newStatus }));
-    startInline(async () => {
-      await updatePostStatus(postId, newStatus);
-      setPendingIds(prev => { const s = new Set(prev); s.delete(postId); return s; });
-    });
-  }
 
   function handleApproveAll() {
     const optimistic: Record<string, string> = {};
@@ -245,7 +233,6 @@ export function XCalendar({ posts, strategyId }: { posts: Post[]; strategyId: st
 
   return (
     <>
-      {/* Stats bar */}
       <div style={{ marginBottom: "1.75rem", display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
         <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
           <span style={{ color: "var(--fg)", fontWeight: 600 }}>{scheduled}</span> scheduled
@@ -314,8 +301,6 @@ export function XCalendar({ posts, strategyId }: { posts: Post[]; strategyId: st
                 const liveStatus = getStatus(post);
                 const time = getPostTime(post.post_type, post.sort_order ?? 0);
                 const dot = STATUS_COLOR[liveStatus] ?? "var(--muted-2)";
-                const isDraft = liveStatus === "draft";
-                const isPending = pendingIds.has(post.id);
 
                 return (
                   <div
@@ -347,46 +332,13 @@ export function XCalendar({ posts, strategyId }: { posts: Post[]; strategyId: st
                       flex: 1, fontSize: "0.82rem", color: "var(--fg)",
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
                     }}>{post.content}</span>
-
-                    {isDraft ? (
-                      <div
-                        style={{ display: "flex", gap: "0.375rem", flexShrink: 0 }}
-                        onClick={e => e.stopPropagation()}
-                      >
-                        <button
-                          onClick={e => handleInlineStatus(post.id, "rejected", e)}
-                          disabled={isPending}
-                          title="Reject"
-                          style={{
-                            padding: "4px 9px", border: "none", borderRadius: 5,
-                            background: "rgba(248,113,113,0.1)", color: "#f87171",
-                            fontSize: "0.7rem", fontWeight: 700,
-                            cursor: isPending ? "wait" : "pointer",
-                            opacity: isPending ? 0.4 : 1,
-                          }}
-                        >✕</button>
-                        <button
-                          onClick={e => handleInlineStatus(post.id, "approved", e)}
-                          disabled={isPending}
-                          style={{
-                            padding: "4px 12px", border: "none", borderRadius: 5,
-                            background: "rgba(109,107,245,0.85)", color: "#fff",
-                            fontSize: "0.7rem", fontWeight: 700,
-                            cursor: isPending ? "wait" : "pointer",
-                            opacity: isPending ? 0.4 : 1,
-                            boxShadow: "0 0 10px rgba(109,107,245,0.3)",
-                          }}
-                        >Approve</button>
-                      </div>
-                    ) : (
-                      <span style={{
-                        fontSize: "0.68rem", fontWeight: 600,
-                        padding: "3px 9px", borderRadius: 5, flexShrink: 0,
-                        ...statusStyle(liveStatus),
-                      }}>
-                        {statusLabel(liveStatus)}
-                      </span>
-                    )}
+                    <span style={{
+                      fontSize: "0.68rem", fontWeight: 600,
+                      padding: "3px 9px", borderRadius: 5, flexShrink: 0,
+                      ...statusStyle(liveStatus),
+                    }}>
+                      {statusLabel(liveStatus)}
+                    </span>
                   </div>
                 );
               })}
