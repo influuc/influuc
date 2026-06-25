@@ -57,17 +57,14 @@ export default async function StrategyPage() {
 
   if (!current) {
     return (
-      <div style={{ padding: "2.5rem 2.5rem 5rem", maxWidth: 900, margin: "0 auto", width: "100%" }}>
-        <div style={{
-          padding: "4rem 2rem", textAlign: "center",
-          background: "var(--card)", borderRadius: 14, border: "1px solid var(--border)",
-          marginTop: "2rem",
-        }}>
-          <p style={{ fontSize: "1rem", fontWeight: 600, color: "var(--fg)", margin: "0 0 0.5rem" }}>
-            No strategy yet
-          </p>
+      <div style={{ padding: "2rem 2.5rem 5rem", maxWidth: 1100, margin: "0 auto", width: "100%" }}>
+        <h1 style={{ fontSize: "1.6rem", fontWeight: 700, letterSpacing: "-0.025em", margin: "0 0 1rem" }}>
+          Weekly Strategy
+        </h1>
+        <div style={{ padding: "4rem 2rem", textAlign: "center", background: "var(--card)", borderRadius: "var(--radius)" }}>
+          <p style={{ color: "var(--fg)", fontWeight: 600, margin: "0 0 0.5rem" }}>No strategy yet</p>
           <p style={{ color: "var(--muted)", fontSize: "0.82rem", lineHeight: 1.6, margin: 0 }}>
-            Your weekly strategy will appear here once the AI generates it — usually after onboarding.
+            Your weekly strategy will appear here once generated — usually after onboarding.
           </p>
         </div>
       </div>
@@ -80,48 +77,34 @@ export default async function StrategyPage() {
 
   return (
     <div style={{
-      padding: "2.5rem 2.5rem 5rem",
-      maxWidth: 900,
+      padding: "2rem 2.5rem 5rem",
+      maxWidth: 1100,
       margin: "0 auto",
       width: "100%",
       display: "flex",
       flexDirection: "column",
-      gap: "1.75rem",
+      gap: "1.5rem",
     }}>
       {/* Header */}
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", flexWrap: "wrap", gap: "1rem" }}>
-        <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-          <div style={{
-            width: 48, height: 48, borderRadius: 14, flexShrink: 0,
-            background: "linear-gradient(135deg, rgba(109,107,245,0.2) 0%, rgba(52,211,153,0.2) 100%)",
-            border: "1px solid rgba(109,107,245,0.25)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-          }}>
-            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
-              <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
-            </svg>
-          </div>
-          <div>
-            <h1 style={{ fontSize: "1.65rem", fontWeight: 800, letterSpacing: "-0.03em", margin: 0, color: "var(--fg)" }}>
-              Weekly Strategy
-            </h1>
-            <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.25rem" }}>
-              {fmtWeek(current.week_start)}
-            </p>
-          </div>
+        <div>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0, color: "var(--fg)" }}>
+            Weekly Strategy
+          </h1>
+          <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: "0.35rem" }}>
+            {fmtWeek(current.week_start)}
+          </p>
         </div>
 
-        {/* Review buttons */}
+        {/* Review buttons — same style as dashboard action links */}
         <div style={{ display: "flex", gap: "0.5rem", flexShrink: 0 }}>
           <Link href="/dashboard/x" style={{
             display: "flex", alignItems: "center", gap: "0.5rem",
             fontSize: "0.78rem", fontWeight: 600, color: "var(--fg)", textDecoration: "none",
-            padding: "0.5rem 0.875rem", borderRadius: 9,
+            padding: "0.45rem 0.875rem", borderRadius: 8,
             background: "rgba(255,255,255,0.07)",
-            border: "1px solid rgba(255,255,255,0.12)",
           }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
             Review posts
@@ -129,11 +112,10 @@ export default async function StrategyPage() {
           <Link href="/dashboard/linkedin" style={{
             display: "flex", alignItems: "center", gap: "0.5rem",
             fontSize: "0.78rem", fontWeight: 600, color: "#60a5fa", textDecoration: "none",
-            padding: "0.5rem 0.875rem", borderRadius: 9,
+            padding: "0.45rem 0.875rem", borderRadius: 8,
             background: "rgba(10,102,194,0.12)",
-            border: "1px solid rgba(10,102,194,0.25)",
           }}>
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor">
               <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433a2.062 2.062 0 01-2.063-2.065 2.064 2.064 0 112.063 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />
             </svg>
             Review posts
@@ -141,30 +123,42 @@ export default async function StrategyPage() {
         </div>
       </div>
 
-      {/* Week theme summary */}
+      {/* Week theme summary — left accent bar, same as dashboard uses for orange banner */}
       {strat?.summary && (
         <div style={{
-          padding: "1.25rem 1.5rem",
-          background: "rgba(109,107,245,0.08)",
-          border: "1px solid rgba(109,107,245,0.2)",
-          borderRadius: 14,
-          boxShadow: "inset 4px 0 0 rgba(109,107,245,0.5)",
+          padding: "1.125rem 1.5rem",
+          background: "var(--card)",
+          borderRadius: "var(--radius)",
+          borderLeft: "3px solid rgba(109,107,245,0.5)",
         }}>
           <p style={{
-            fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em",
+            fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
             textTransform: "uppercase", color: "var(--accent-fg)", margin: "0 0 0.5rem",
           }}>
             This week&apos;s theme
           </p>
-          <p style={{ fontSize: "0.975rem", color: "var(--fg)", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
+          <p style={{ fontSize: "0.95rem", color: "var(--fg)", lineHeight: 1.6, margin: 0, fontWeight: 500 }}>
             {strat.summary}
           </p>
         </div>
       )}
 
-      {/* Day cards */}
+      {/* Day entries — ONE card, flat rows inside, no individual boxes */}
       {ideas.length > 0 && (
-        <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
+        <section style={{ background: "var(--card)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+          {/* Column header row */}
+          <div style={{
+            display: "grid",
+            gridTemplateColumns: "72px 1fr",
+            padding: "0.5rem 1.5rem",
+            fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.1em",
+            textTransform: "uppercase", color: "var(--muted-2)",
+            borderBottom: "1px solid var(--border)",
+          }}>
+            <span>Day</span>
+            <span>Content Plan</span>
+          </div>
+
           {ideas.map((idea, i) => {
             const isPast  = idea.date < todayStr;
             const isToday = idea.date === todayStr;
@@ -172,71 +166,65 @@ export default async function StrategyPage() {
 
             return (
               <div key={idea.date} style={{
-                padding: "1.25rem 1.5rem",
-                background: isToday ? "rgba(109,107,245,0.07)" : isPast ? "rgba(255,255,255,0.01)" : "var(--card)",
-                border: isToday
-                  ? "1px solid rgba(109,107,245,0.3)"
-                  : isPast
-                    ? "1px solid var(--border)"
-                    : "1px solid var(--border-med)",
-                borderRadius: 14,
-                opacity: isPast ? 0.65 : 1,
-                display: "flex", gap: "1.5rem",
-                boxShadow: isToday ? "0 0 24px rgba(109,107,245,0.12)" : "none",
+                display: "grid",
+                gridTemplateColumns: "72px 1fr",
+                borderBottom: i < ideas.length - 1 ? "1px solid var(--border)" : "none",
+                background: isToday ? "rgba(109,107,245,0.06)" : "transparent",
+                borderLeft: isToday ? "3px solid rgba(109,107,245,0.5)" : "3px solid transparent",
+                opacity: isPast ? 0.55 : 1,
               }}>
-                {/* Day label */}
+                {/* Day label column */}
                 <div style={{
-                  flexShrink: 0, width: 56,
+                  padding: "1.25rem 0.75rem 1.25rem 1.25rem",
                   display: "flex", flexDirection: "column",
-                  alignItems: "center", paddingTop: "0.1rem", gap: "0.25rem",
+                  alignItems: "flex-start", justifyContent: "flex-start", gap: "0.2rem",
+                  borderRight: "1px solid var(--border)",
                 }}>
                   <span style={{
-                    fontSize: "0.72rem", fontWeight: 800, letterSpacing: "0.06em",
+                    fontSize: "0.72rem", fontWeight: 700, letterSpacing: "0.05em",
                     textTransform: "uppercase",
-                    color: isToday ? "var(--accent-fg)" : isPast ? "var(--muted-2)" : "var(--muted)",
+                    color: isToday ? "var(--accent-fg)" : "var(--muted)",
                   }}>
                     {dayLabel}
                   </span>
-                  <span style={{ fontSize: "0.7rem", color: "var(--muted-2)" }}>
+                  <span style={{ fontSize: "0.68rem", color: "var(--muted-2)" }}>
                     {fmtDate(idea.date)}
                   </span>
                   {isToday && (
                     <span style={{
-                      fontSize: "0.58rem", padding: "1px 7px", borderRadius: 99,
+                      fontSize: "0.55rem", padding: "1px 6px", borderRadius: 99, marginTop: "0.15rem",
                       background: "rgba(109,107,245,0.25)", color: "var(--accent-fg)",
-                      fontWeight: 700, marginTop: "0.1rem", letterSpacing: "0.04em",
+                      fontWeight: 700, letterSpacing: "0.05em",
                     }}>
                       TODAY
                     </span>
                   )}
                 </div>
 
-                {/* Vertical divider */}
+                {/* Content column */}
                 <div style={{
-                  width: 1, flexShrink: 0, alignSelf: "stretch",
-                  background: isToday ? "rgba(109,107,245,0.3)" : "var(--border)",
-                }} />
-
-                {/* Content */}
-                <div style={{ flex: 1, minWidth: 0, display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+                  padding: "1.25rem 1.5rem",
+                  display: "flex", flexDirection: "column", gap: "0.5rem",
+                }}>
                   <p style={{
-                    fontSize: "0.95rem", fontWeight: 700, color: "var(--fg)", margin: 0, lineHeight: 1.35,
-                    letterSpacing: "-0.01em",
+                    fontSize: "0.9rem", fontWeight: 700, color: "var(--fg)",
+                    margin: 0, lineHeight: 1.35, letterSpacing: "-0.01em",
                   }}>
                     {idea.theme}
                   </p>
                   {idea.hook && (
                     <p style={{
-                      fontSize: "0.85rem", color: isToday ? "var(--accent-fg)" : "var(--muted)",
+                      fontSize: "0.82rem",
+                      color: isToday ? "var(--accent-fg)" : "var(--muted)",
                       margin: 0, lineHeight: 1.55, fontStyle: "italic",
                     }}>
                       &ldquo;{idea.hook}&rdquo;
                     </p>
                   )}
                   {idea.talking_points?.length > 0 && (
-                    <ul style={{ margin: 0, padding: "0 0 0 1.1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
+                    <ul style={{ margin: 0, padding: "0 0 0 1rem", display: "flex", flexDirection: "column", gap: "0.2rem" }}>
                       {idea.talking_points.map((pt, j) => (
-                        <li key={j} style={{ fontSize: "0.78rem", color: "var(--muted-2)", lineHeight: 1.5 }}>
+                        <li key={j} style={{ fontSize: "0.77rem", color: "var(--muted-2)", lineHeight: 1.5 }}>
                           {pt}
                         </li>
                       ))}
@@ -246,49 +234,45 @@ export default async function StrategyPage() {
               </div>
             );
           })}
-        </div>
+        </section>
       )}
 
       {/* Past weeks */}
       {all.length > 1 && (
-        <section>
-          <div style={{ paddingBottom: "0.75rem", marginBottom: "0.75rem", borderBottom: "1px solid var(--border)" }}>
-            <h2 style={{
-              fontSize: "0.75rem", fontWeight: 700, letterSpacing: "0.06em",
-              textTransform: "uppercase", color: "var(--muted-2)", margin: 0,
-            }}>
+        <section style={{ background: "var(--card)", borderRadius: "var(--radius)", overflow: "hidden" }}>
+          <div style={{
+            padding: "0.875rem 1.5rem",
+            borderBottom: "1px solid var(--border)",
+          }}>
+            <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted-2)" }}>
               Past weeks
-            </h2>
+            </span>
           </div>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-            {all.slice(1).map(s => {
-              const ps = s.strategy as WeeklyStrategy | null;
-              return (
-                <div key={s.id} style={{
-                  padding: "0.875rem 1.25rem",
-                  background: "var(--card)",
-                  border: "1px solid var(--border)",
-                  borderRadius: 10,
-                  opacity: 0.65,
-                  display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem",
-                }}>
-                  <div style={{ minWidth: 0, flex: 1 }}>
-                    <p style={{ fontSize: "0.7rem", color: "var(--muted-2)", margin: "0 0 0.3rem", fontWeight: 600, letterSpacing: "0.04em", textTransform: "uppercase" }}>
-                      {fmtWeek(s.week_start)}
+          {all.slice(1).map((s, i) => {
+            const ps = s.strategy as WeeklyStrategy | null;
+            return (
+              <div key={s.id} style={{
+                padding: "0.875rem 1.5rem",
+                borderBottom: i < all.length - 2 ? "1px solid var(--border)" : "none",
+                display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "1rem",
+                opacity: 0.6,
+              }}>
+                <div style={{ minWidth: 0, flex: 1 }}>
+                  <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "var(--muted-2)", margin: "0 0 0.25rem" }}>
+                    {fmtWeek(s.week_start)}
+                  </p>
+                  {ps?.summary && (
+                    <p style={{ fontSize: "0.82rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
+                      {ps.summary}
                     </p>
-                    {ps?.summary && (
-                      <p style={{ fontSize: "0.82rem", color: "var(--muted)", margin: 0, lineHeight: 1.5 }}>
-                        {ps.summary}
-                      </p>
-                    )}
-                  </div>
-                  <span style={{ fontSize: "0.68rem", color: "var(--muted-2)", flexShrink: 0, marginTop: "0.1rem" }}>
-                    {ps?.ideas?.length ?? 0} days
-                  </span>
+                  )}
                 </div>
-              );
-            })}
-          </div>
+                <span style={{ fontSize: "0.68rem", color: "var(--muted-2)", flexShrink: 0 }}>
+                  {ps?.ideas?.length ?? 0} days
+                </span>
+              </div>
+            );
+          })}
         </section>
       )}
     </div>

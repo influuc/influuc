@@ -51,8 +51,7 @@ function StatChip({ value, label, color }: { value: number; label: string; color
     <div style={{
       padding: "0.75rem 1.125rem",
       background: "var(--card)",
-      border: "1px solid var(--border-med)",
-      borderRadius: 10,
+      borderRadius: "var(--radius)",
       display: "flex", flexDirection: "column", gap: "0.15rem",
     }}>
       <span style={{ fontSize: "1.4rem", fontWeight: 800, color, letterSpacing: "-0.03em", lineHeight: 1 }}>
@@ -210,8 +209,7 @@ export default async function HistoryPage() {
             <div style={{
               display: "flex", flexDirection: "column",
               background: "var(--card)",
-              border: "1px solid var(--border-med)",
-              borderRadius: 14, overflow: "hidden",
+              borderRadius: "var(--radius)", overflow: "hidden",
             }}>
               {weekPosts.map((post, i) => (
                 <div key={post.id} style={{

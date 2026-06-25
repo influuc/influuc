@@ -27,18 +27,6 @@ const LAYER_COLORS: Record<string, string> = {
   goal:          "#a3e635",
 };
 
-const LAYER_BG: Record<string, string> = {
-  identity:      "rgba(167,139,250,0.07)",
-  expertise:     "rgba(96,165,250,0.07)",
-  positioning:   "rgba(251,146,60,0.07)",
-  audience:      "rgba(45,212,191,0.07)",
-  offer:         "rgba(52,211,153,0.07)",
-  belief:        "rgba(244,114,182,0.07)",
-  story:         "rgba(251,191,36,0.07)",
-  writing_style: "rgba(129,140,248,0.07)",
-  goal:          "rgba(163,230,53,0.07)",
-};
-
 const LAYER_ORDER = [
   "identity", "expertise", "positioning", "audience",
   "offer", "belief", "goal", "story", "writing_style",
@@ -55,7 +43,7 @@ function ConfidenceChip({ value }: { value: number | null }) {
   const bg    = v >= 0.8 ? "rgba(74,222,128,0.12)" : v >= 0.5 ? "rgba(251,191,36,0.12)" : "rgba(255,255,255,0.05)";
   return (
     <span style={{
-      fontSize: "0.6rem", fontWeight: 700, letterSpacing: "0.06em",
+      fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.06em",
       padding: "2px 7px", borderRadius: 99, background: bg, color, flexShrink: 0,
     }}>
       {label}
@@ -66,10 +54,9 @@ function ConfidenceChip({ value }: { value: number | null }) {
 function StatCard({ value, label, color }: { value: number; label: string; color: string }) {
   return (
     <div style={{
-      padding: "1rem 1.25rem",
+      padding: "1.125rem 1.5rem",
       background: "var(--card)",
-      border: "1px solid var(--border-med)",
-      borderRadius: 12,
+      borderRadius: "var(--radius)",
       display: "flex", flexDirection: "column", gap: "0.2rem",
     }}>
       <span style={{ fontSize: "1.75rem", fontWeight: 800, color, letterSpacing: "-0.04em", lineHeight: 1 }}>
@@ -123,8 +110,8 @@ export default async function BrainPage() {
 
   return (
     <div style={{
-      padding: "2.5rem 2.5rem 5rem",
-      maxWidth: 900,
+      padding: "2rem 2.5rem 5rem",
+      maxWidth: 1100,
       margin: "0 auto",
       width: "100%",
       display: "flex",
@@ -132,23 +119,12 @@ export default async function BrainPage() {
       gap: "1.75rem",
     }}>
       {/* Header */}
-      <div style={{ display: "flex", alignItems: "flex-start", gap: "1rem" }}>
-        <div style={{
-          width: 48, height: 48, borderRadius: 14, flexShrink: 0,
-          background: "linear-gradient(135deg, rgba(109,107,245,0.2) 0%, rgba(167,139,250,0.2) 100%)",
-          border: "1px solid rgba(109,107,245,0.25)",
-          display: "flex", alignItems: "center", justifyContent: "center",
-        }}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" />
-            <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />
-          </svg>
-        </div>
+      <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: "1rem" }}>
         <div>
-          <h1 style={{ fontSize: "1.65rem", fontWeight: 800, letterSpacing: "-0.03em", margin: 0, color: "var(--fg)" }}>
+          <h1 style={{ fontSize: "1.6rem", fontWeight: 700, letterSpacing: "-0.03em", margin: 0, color: "var(--fg)" }}>
             Founder Brain
           </h1>
-          <p style={{ color: "var(--muted)", fontSize: "0.85rem", marginTop: "0.25rem", lineHeight: 1.5 }}>
+          <p style={{ color: "var(--muted)", fontSize: "0.82rem", marginTop: "0.35rem" }}>
             {active.length > 0
               ? `${active.length} verified facts shaping everything ${firstName} publishes`
               : "Build your brain — facts about you personalise every AI output"}
@@ -156,66 +132,55 @@ export default async function BrainPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))", gap: "0.75rem" }}>
+      {/* Stats — no border, matches dashboard stat card pattern */}
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "0.875rem" }}>
         <StatCard value={active.length}       label="Active Facts"  color="#4ade80" />
         <StatCard value={candidates.length}   label="Needs Review"  color="#fb923c" />
         <StatCard value={sortedLayers.length} label="Categories"    color="#a5b4fc" />
       </div>
 
-      {/* Candidates */}
+      {/* Candidates — single card, left orange accent, rows inside */}
       {candidates.length > 0 && (
-        <section>
+        <section style={{
+          background: "var(--card)",
+          borderRadius: "var(--radius)",
+          overflow: "hidden",
+          borderLeft: "3px solid rgba(251,146,60,0.5)",
+        }}>
           <div style={{
-            background: "rgba(251,146,60,0.05)",
-            border: "1px solid rgba(251,146,60,0.2)",
-            borderRadius: 14, overflow: "hidden",
+            padding: "1rem 1.5rem",
+            display: "flex", alignItems: "center", gap: "0.75rem",
+            borderBottom: "1px solid var(--border)",
           }}>
-            <div style={{
-              padding: "0.875rem 1.25rem",
-              borderBottom: "1px solid rgba(251,146,60,0.12)",
-              display: "flex", alignItems: "center", gap: "0.625rem",
-            }}>
-              <div style={{ width: 8, height: 8, borderRadius: 2, background: "#fb923c", flexShrink: 0 }} />
-              <span style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fb923c", flex: 1 }}>
-                Needs your review
-              </span>
-              <span style={{
-                minWidth: 22, height: 22, borderRadius: 99,
-                background: "rgba(251,146,60,0.2)", color: "#fb923c",
-                fontSize: "0.65rem", fontWeight: 700,
-                display: "inline-flex", alignItems: "center", justifyContent: "center",
-                padding: "0 6px",
-              }}>
-                {candidates.length}
-              </span>
-              <span style={{ fontSize: "0.72rem", color: "var(--muted-2)", marginLeft: "0.25rem" }}>
-                Confirm or dismiss
-              </span>
-            </div>
-            {candidates.map((fact, i) => (
-              <div key={fact.id} style={{
-                display: "flex", gap: "1rem", alignItems: "flex-start",
-                padding: "1rem 1.25rem",
-                borderBottom: i < candidates.length - 1 ? "1px solid rgba(251,146,60,0.08)" : "none",
-              }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  {fact.key && fact.key !== fact.content && (
-                    <p style={{
-                      fontSize: "0.65rem", fontWeight: 700, color: "#fb923c",
-                      margin: "0 0 0.3rem", letterSpacing: "0.06em", textTransform: "uppercase",
-                    }}>
-                      {humanizeKey(fact.key)}
-                    </p>
-                  )}
-                  <p style={{ fontSize: "0.875rem", color: "var(--fg)", lineHeight: 1.65, margin: 0 }}>
-                    {fact.content}
-                  </p>
-                </div>
-                <FactActions factId={fact.id} type="candidate" />
-              </div>
-            ))}
+            <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "#fb923c", flex: 1 }}>
+              Needs your review
+            </span>
+            <span style={{ fontSize: "0.7rem", color: "var(--muted-2)" }}>
+              {candidates.length} pending · confirm or dismiss
+            </span>
           </div>
+          {candidates.map((fact, i) => (
+            <div key={fact.id} style={{
+              display: "flex", gap: "1rem", alignItems: "flex-start",
+              padding: "0.875rem 1.5rem",
+              borderBottom: i < candidates.length - 1 ? "1px solid var(--border)" : "none",
+            }}>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                {fact.key && fact.key !== fact.content && (
+                  <p style={{
+                    fontSize: "0.62rem", fontWeight: 700, color: "#fb923c",
+                    margin: "0 0 0.3rem", letterSpacing: "0.06em", textTransform: "uppercase",
+                  }}>
+                    {humanizeKey(fact.key)}
+                  </p>
+                )}
+                <p style={{ fontSize: "0.875rem", color: "var(--fg)", lineHeight: 1.65, margin: 0 }}>
+                  {fact.content}
+                </p>
+              </div>
+              <FactActions factId={fact.id} type="candidate" />
+            </div>
+          ))}
         </section>
       )}
 
@@ -223,19 +188,8 @@ export default async function BrainPage() {
       {active.length === 0 && candidates.length === 0 && (
         <div style={{
           padding: "4rem 2rem", textAlign: "center",
-          background: "var(--card)", borderRadius: 14, border: "1px solid var(--border)",
+          background: "var(--card)", borderRadius: "var(--radius)",
         }}>
-          <div style={{
-            width: 56, height: 56, borderRadius: 16,
-            background: "rgba(109,107,245,0.1)", border: "1px solid rgba(109,107,245,0.2)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            margin: "0 auto 1.25rem",
-          }}>
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#a5b4fc" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.46 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 1.98-3A2.5 2.5 0 0 1 9.5 2Z" />
-              <path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.46 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-1.98-3A2.5 2.5 0 0 0 14.5 2Z" />
-            </svg>
-          </div>
           <p style={{ fontSize: "1rem", fontWeight: 600, color: "var(--fg)", margin: "0 0 0.5rem" }}>
             No brain facts yet
           </p>
@@ -245,71 +199,74 @@ export default async function BrainPage() {
         </div>
       )}
 
-      {/* Active facts by layer */}
-      {sortedLayers.map(layer => {
-        const layerFacts = activeByLayer.get(layer) ?? [];
-        const color = LAYER_COLORS[layer] ?? "#6b6b80";
-        const bg    = LAYER_BG[layer]    ?? "rgba(255,255,255,0.03)";
+      {/* Active facts — ONE card, layer headers as internal section dividers */}
+      {sortedLayers.length > 0 && (
+        <section style={{
+          background: "var(--card)",
+          borderRadius: "var(--radius)",
+          overflow: "hidden",
+        }}>
+          {sortedLayers.map((layer, li) => {
+            const layerFacts = activeByLayer.get(layer) ?? [];
+            const color = LAYER_COLORS[layer] ?? "#6b6b80";
 
-        return (
-          <section key={layer}>
-            <div style={{
-              background: "var(--card)",
-              border: "1px solid var(--border-med)",
-              borderRadius: 14, overflow: "hidden",
-            }}>
-              <div style={{
-                padding: "0.875rem 1.25rem",
-                borderBottom: "1px solid var(--border)",
-                display: "flex", alignItems: "center", gap: "0.75rem",
-                background: bg,
-              }}>
-                <div style={{ width: 10, height: 10, borderRadius: 3, background: color, flexShrink: 0 }} />
-                <span style={{ fontSize: "0.875rem", fontWeight: 700, color: "var(--fg)", letterSpacing: "-0.01em", flex: 1 }}>
-                  {LAYER_LABELS[layer] ?? layer}
-                </span>
-                <span style={{ fontSize: "0.7rem", color: "var(--muted-2)" }}>
-                  {layerFacts.length} fact{layerFacts.length !== 1 ? "s" : ""}
-                </span>
-              </div>
-              {layerFacts.map((fact, i) => (
-                <div key={fact.id} style={{
-                  display: "flex", gap: "1rem", alignItems: "flex-start",
-                  padding: "1rem 1.25rem",
-                  borderBottom: i < layerFacts.length - 1 ? "1px solid var(--border)" : "none",
+            return (
+              <div key={layer}>
+                {/* Layer header — acts as a row divider */}
+                <div style={{
+                  padding: "0.75rem 1.5rem",
+                  display: "flex", alignItems: "center", gap: "0.75rem",
+                  borderTop: li > 0 ? "1px solid var(--border)" : "none",
+                  borderBottom: "1px solid var(--border)",
                 }}>
-                  <ConfidenceChip value={fact.confidence} />
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    {fact.key && fact.key !== fact.content && (
-                      <p style={{
-                        fontSize: "0.65rem", fontWeight: 700, color, opacity: 0.85,
-                        margin: "0 0 0.3rem", letterSpacing: "0.06em", textTransform: "uppercase",
-                      }}>
-                        {humanizeKey(fact.key)}
-                      </p>
-                    )}
-                    <p style={{ fontSize: "0.875rem", color: "var(--fg)", lineHeight: 1.65, margin: 0 }}>
-                      {fact.content}
-                    </p>
-                  </div>
-                  <div style={{ display: "flex", gap: "0.375rem", flexShrink: 0, alignItems: "center", alignSelf: "flex-start" }}>
-                    {fact.source_kind && (
-                      <span style={{
-                        fontSize: "0.6rem", padding: "2px 6px", borderRadius: 4,
-                        background: "rgba(255,255,255,0.04)", color: "var(--muted-2)",
-                        border: "1px solid var(--border)",
-                      }}>
-                        {fact.source_kind}
-                      </span>
-                    )}
-                    <FactActions factId={fact.id} type="active" />
-                  </div>
+                  <div style={{ width: 8, height: 8, borderRadius: 2, background: color, flexShrink: 0 }} />
+                  <span style={{ fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em", textTransform: "uppercase", color: "var(--muted-2)", flex: 1 }}>
+                    {LAYER_LABELS[layer] ?? layer}
+                  </span>
+                  <span style={{ fontSize: "0.68rem", color: "var(--muted-2)" }}>
+                    {layerFacts.length}
+                  </span>
                 </div>
-              ))}
-            </div>
-          </section>
-        );
-      })}
+
+                {/* Fact rows */}
+                {layerFacts.map((fact, i) => (
+                  <div key={fact.id} style={{
+                    display: "flex", gap: "1rem", alignItems: "flex-start",
+                    padding: "0.875rem 1.5rem",
+                    borderBottom: i < layerFacts.length - 1 ? "1px solid var(--border)" : "none",
+                  }}>
+                    <ConfidenceChip value={fact.confidence} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      {fact.key && fact.key !== fact.content && (
+                        <p style={{
+                          fontSize: "0.62rem", fontWeight: 700, color,
+                          margin: "0 0 0.3rem", letterSpacing: "0.06em", textTransform: "uppercase", opacity: 0.8,
+                        }}>
+                          {humanizeKey(fact.key)}
+                        </p>
+                      )}
+                      <p style={{ fontSize: "0.875rem", color: "var(--fg)", lineHeight: 1.65, margin: 0 }}>
+                        {fact.content}
+                      </p>
+                    </div>
+                    <div style={{ display: "flex", gap: "0.375rem", flexShrink: 0, alignItems: "center", alignSelf: "flex-start" }}>
+                      {fact.source_kind && (
+                        <span style={{
+                          fontSize: "0.58rem", padding: "2px 6px", borderRadius: 4,
+                          background: "rgba(255,255,255,0.04)", color: "var(--muted-2)",
+                        }}>
+                          {fact.source_kind}
+                        </span>
+                      )}
+                      <FactActions factId={fact.id} type="active" />
+                    </div>
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </section>
+      )}
 
       {/* Add fact */}
       <AddFactForm />
