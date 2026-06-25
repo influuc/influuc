@@ -97,7 +97,7 @@ export function ReflectionBanner() {
                   Weekly Reflection
                 </p>
                 <h2 style={{ fontSize: "1.2rem", fontWeight: 700, color: "var(--fg)", margin: "0.15rem 0 0", letterSpacing: "-0.02em" }}>
-                  Your week is done. Let's build next week.
+                  Your week is done. Let&apos;s build next week.
                 </h2>
               </div>
             </div>
