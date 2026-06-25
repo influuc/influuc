@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { updatePostStatus } from "../actions";
+import { updatePostStatus, approveAllPosts } from "../actions";
 
 type Post = {
   id: string;
@@ -53,7 +53,6 @@ const STATUS_COLOR: Record<string, string> = {
 };
 
 function statusLabel(status: string) {
-  if (status === "draft")     return "Needs Review";
   if (status === "approved")  return "Scheduled";
   if (status === "published") return "Published";
   if (status === "rejected")  return "Rejected";
@@ -69,8 +68,12 @@ function statusStyle(status: string): React.CSSProperties {
   return { background: "rgba(255,255,255,0.06)", color: "var(--muted-2)" };
 }
 
-function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
-  const [localStatus, setLocalStatus] = useState(post.status);
+function PostModal({ post, localStatus, onClose, onStatusChange }: {
+  post: Post;
+  localStatus: string;
+  onClose: () => void;
+  onStatusChange: (s: "approved" | "rejected") => void;
+}) {
   const [isPending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
 
@@ -83,7 +86,7 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
   function handleStatus(newStatus: "approved" | "rejected") {
     startTransition(async () => {
       await updatePostStatus(post.id, newStatus);
-      setLocalStatus(newStatus);
+      onStatusChange(newStatus);
     });
   }
 
@@ -99,29 +102,20 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
 
   return (
     <>
-      <div
-        onClick={onClose}
-        style={{
-          position: "fixed", inset: 0,
-          background: "rgba(0,0,0,0.65)",
-          backdropFilter: "blur(6px)",
-          WebkitBackdropFilter: "blur(6px)",
-          zIndex: 200,
-        }}
-      />
+      <div onClick={onClose} style={{
+        position: "fixed", inset: 0,
+        background: "rgba(0,0,0,0.65)",
+        backdropFilter: "blur(6px)", WebkitBackdropFilter: "blur(6px)",
+        zIndex: 200,
+      }} />
       <div style={{
-        position: "fixed",
-        top: "50%", left: "50%",
+        position: "fixed", top: "50%", left: "50%",
         transform: "translate(-50%, -50%)",
         width: "min(520px, calc(100vw - 32px))",
-        maxHeight: "85vh",
-        overflowY: "auto",
-        background: "#0f0f1e",
-        borderRadius: 20,
-        zIndex: 201,
+        maxHeight: "85vh", overflowY: "auto",
+        background: "#0f0f1e", borderRadius: 20, zIndex: 201,
         boxShadow: "0 32px 100px rgba(0,0,0,0.9), 0 0 0 1px rgba(255,255,255,0.06)",
       }}>
-        {/* Header */}
         <div style={{
           padding: "1.125rem 1.25rem",
           display: "flex", alignItems: "center", gap: "0.75rem",
@@ -142,27 +136,19 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
               {time} · {getTypeName(post.post_type)}
             </p>
           </div>
-          <button
-            onClick={onClose}
-            style={{
-              background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8,
-              width: 28, height: 28, cursor: "pointer", color: "var(--muted)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              fontSize: "0.75rem", flexShrink: 0,
-            }}
-          >
-            ✕
-          </button>
+          <button onClick={onClose} style={{
+            background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 8,
+            width: 28, height: 28, cursor: "pointer", color: "var(--muted)",
+            display: "flex", alignItems: "center", justifyContent: "center",
+            fontSize: "0.75rem", flexShrink: 0,
+          }}>✕</button>
         </div>
 
-        {/* Platform preview */}
         <div style={{ padding: "1rem 1.25rem 0.75rem" }}>
           <p style={{
             fontSize: "0.58rem", fontWeight: 700, letterSpacing: "0.12em",
             textTransform: "uppercase", color: "var(--muted-2)", margin: "0 0 0.75rem",
-          }}>
-            Platform Preview
-          </p>
+          }}>Platform Preview</p>
           <div style={{
             background: "#000", borderRadius: 14, padding: "1rem 1.125rem",
             border: "1px solid rgba(255,255,255,0.07)",
@@ -173,70 +159,48 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
                 background: "linear-gradient(135deg, #6d6bf5, #a5b4fc)",
                 display: "flex", alignItems: "center", justifyContent: "center",
                 fontSize: "0.75rem", color: "#fff", fontWeight: 700,
-              }}>
-                ✦
-              </div>
+              }}>✦</div>
               <div>
                 <p style={{ fontSize: "0.82rem", fontWeight: 700, color: "#fff", margin: 0 }}>You</p>
                 <p style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.38)", margin: 0 }}>@you · 1m</p>
-              </div>
-              <div style={{ marginLeft: "auto" }}>
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="rgba(255,255,255,0.3)">
-                  <circle cx="5" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="19" cy="12" r="2" />
-                </svg>
               </div>
             </div>
             <p style={{
               fontSize: "0.875rem", color: "#e7e9ea", lineHeight: 1.65, margin: 0,
               whiteSpace: "pre-wrap", fontFamily: "system-ui, -apple-system, sans-serif",
-            }}>
-              {post.content}
-            </p>
+            }}>{post.content}</p>
           </div>
         </div>
 
-        {/* Actions */}
         <div style={{ padding: "0.75rem 1.25rem 1.25rem", display: "flex", flexDirection: "column", gap: "0.5rem" }}>
-          <button
-            onClick={handleCopy}
-            style={{
-              width: "100%", padding: "0.7rem",
-              background: "rgba(255,255,255,0.06)",
-              border: "none", borderRadius: 10,
-              color: copied ? "var(--success)" : "var(--fg)",
-              fontSize: "0.82rem", fontWeight: 600, cursor: "pointer",
-              display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
-              transition: "color 0.2s",
-            }}
-          >
+          <button onClick={handleCopy} style={{
+            width: "100%", padding: "0.7rem",
+            background: "rgba(255,255,255,0.06)", border: "none", borderRadius: 10,
+            color: copied ? "var(--success)" : "var(--fg)",
+            fontSize: "0.82rem", fontWeight: 600, cursor: "pointer",
+            display: "flex", alignItems: "center", justifyContent: "center", gap: "0.5rem",
+            transition: "color 0.2s",
+          }}>
             {copied ? "✓ Copied!" : "Copy Content"}
           </button>
           <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button
-              onClick={() => handleStatus("rejected")}
-              disabled={isPending || isRejected}
-              style={{
-                flex: 1, padding: "0.7rem", border: "none", borderRadius: 10,
-                background: isRejected ? "rgba(248,113,113,0.15)" : "rgba(255,255,255,0.05)",
-                color: isRejected ? "#f87171" : "var(--muted)",
-                fontSize: "0.82rem", fontWeight: 600, cursor: isPending ? "wait" : "pointer",
-                opacity: isPending ? 0.6 : 1, transition: "all 0.15s",
-              }}
-            >
+            <button onClick={() => handleStatus("rejected")} disabled={isPending || isRejected} style={{
+              flex: 1, padding: "0.7rem", border: "none", borderRadius: 10,
+              background: isRejected ? "rgba(248,113,113,0.15)" : "rgba(255,255,255,0.05)",
+              color: isRejected ? "#f87171" : "var(--muted)",
+              fontSize: "0.82rem", fontWeight: 600, cursor: isPending ? "wait" : "pointer",
+              opacity: isPending ? 0.6 : 1, transition: "all 0.15s",
+            }}>
               {isRejected ? "✓ Rejected" : "Reject"}
             </button>
-            <button
-              onClick={() => handleStatus("approved")}
-              disabled={isPending || isDone}
-              style={{
-                flex: 2, padding: "0.7rem", border: "none", borderRadius: 10,
-                background: isDone ? "rgba(74,222,128,0.15)" : "rgba(109,107,245,0.85)",
-                color: isDone ? "#4ade80" : "#fff",
-                fontSize: "0.82rem", fontWeight: 700, cursor: isPending ? "wait" : "pointer",
-                boxShadow: isDone ? "none" : "0 0 20px rgba(109,107,245,0.35)",
-                opacity: isPending ? 0.6 : 1, transition: "all 0.15s",
-              }}
-            >
+            <button onClick={() => handleStatus("approved")} disabled={isPending || isDone} style={{
+              flex: 2, padding: "0.7rem", border: "none", borderRadius: 10,
+              background: isDone ? "rgba(74,222,128,0.15)" : "rgba(109,107,245,0.85)",
+              color: isDone ? "#4ade80" : "#fff",
+              fontSize: "0.82rem", fontWeight: 700, cursor: isPending ? "wait" : "pointer",
+              boxShadow: isDone ? "none" : "0 0 20px rgba(109,107,245,0.35)",
+              opacity: isPending ? 0.6 : 1, transition: "all 0.15s",
+            }}>
               {isDone ? "✓ Approved" : "Approve"}
             </button>
           </div>
@@ -246,15 +210,43 @@ function PostModal({ post, onClose }: { post: Post; onClose: () => void }) {
   );
 }
 
-export function XCalendar({ posts }: { posts: Post[] }) {
+export function XCalendar({ posts, strategyId }: { posts: Post[]; strategyId: string }) {
   const [selected, setSelected] = useState<Post | null>(null);
+  const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
+  const [pendingIds, setPendingIds] = useState<Set<string>>(new Set());
+  const [approvingAll, startApprovingAll] = useTransition();
+  const [, startInline] = useTransition();
+
+  const getStatus = (p: Post) => localStatuses[p.id] ?? p.status;
   const groups = groupByDate(posts);
-  const scheduled = posts.filter(p => ["approved", "scheduled"].includes(p.status)).length;
-  const published = posts.filter(p => p.status === "published").length;
+  const draftCount = posts.filter(p => getStatus(p) === "draft").length;
+  const scheduled = posts.filter(p => ["approved", "scheduled"].includes(getStatus(p))).length;
+  const published = posts.filter(p => getStatus(p) === "published").length;
+
+  function handleInlineStatus(postId: string, newStatus: "approved" | "rejected", e: React.MouseEvent) {
+    e.stopPropagation();
+    if (pendingIds.has(postId)) return;
+    setPendingIds(prev => new Set([...prev, postId]));
+    setLocalStatuses(prev => ({ ...prev, [postId]: newStatus }));
+    startInline(async () => {
+      await updatePostStatus(postId, newStatus);
+      setPendingIds(prev => { const s = new Set(prev); s.delete(postId); return s; });
+    });
+  }
+
+  function handleApproveAll() {
+    const optimistic: Record<string, string> = {};
+    posts.filter(p => getStatus(p) === "draft").forEach(p => { optimistic[p.id] = "approved"; });
+    setLocalStatuses(prev => ({ ...prev, ...optimistic }));
+    startApprovingAll(async () => {
+      await approveAllPosts(strategyId, "x");
+    });
+  }
 
   return (
     <>
-      <div style={{ marginBottom: "1.75rem", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+      {/* Stats bar */}
+      <div style={{ marginBottom: "1.75rem", display: "flex", alignItems: "center", gap: "0.75rem", flexWrap: "wrap" }}>
         <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
           <span style={{ color: "var(--fg)", fontWeight: 600 }}>{scheduled}</span> scheduled
         </span>
@@ -262,6 +254,30 @@ export function XCalendar({ posts }: { posts: Post[] }) {
         <span style={{ fontSize: "0.82rem", color: "var(--muted)" }}>
           <span style={{ color: "var(--fg)", fontWeight: 600 }}>{published}</span> posted
         </span>
+        {draftCount > 0 && (
+          <>
+            <span style={{ color: "var(--border-med)", fontSize: "1rem" }}>·</span>
+            <span style={{ fontSize: "0.82rem", color: "#fb923c", fontWeight: 600 }}>
+              {draftCount} need review
+            </span>
+            <button
+              onClick={handleApproveAll}
+              disabled={approvingAll}
+              style={{
+                marginLeft: "auto",
+                padding: "0.425rem 1rem",
+                background: approvingAll ? "rgba(109,107,245,0.45)" : "rgba(109,107,245,0.85)",
+                border: "none", borderRadius: 8,
+                color: "#fff", fontSize: "0.78rem", fontWeight: 700,
+                cursor: approvingAll ? "wait" : "pointer",
+                boxShadow: "0 0 14px rgba(109,107,245,0.3)",
+                transition: "all 0.15s",
+              }}
+            >
+              {approvingAll ? "Approving…" : `Approve All (${draftCount})`}
+            </button>
+          </>
+        )}
       </div>
 
       {groups.length === 0 && (
@@ -280,7 +296,6 @@ export function XCalendar({ posts }: { posts: Post[] }) {
           const { num, dow } = fmtDateHeader(date);
           return (
             <div key={date}>
-              {/* Date header */}
               <div style={{
                 display: "flex", alignItems: "center", gap: "0.75rem",
                 padding: "1.25rem 0 0.5rem",
@@ -291,16 +306,17 @@ export function XCalendar({ posts }: { posts: Post[] }) {
                 <span style={{
                   fontSize: "0.62rem", fontWeight: 700, letterSpacing: "0.1em",
                   textTransform: "uppercase", color: "var(--muted-2)",
-                }}>
-                  {dow}
-                </span>
+                }}>{dow}</span>
                 <div style={{ flex: 1, height: 1, background: "var(--border)" }} />
               </div>
 
-              {/* Posts in this day */}
               {dayPosts.map(post => {
+                const liveStatus = getStatus(post);
                 const time = getPostTime(post.post_type, post.sort_order ?? 0);
-                const dot = STATUS_COLOR[post.status] ?? "var(--muted-2)";
+                const dot = STATUS_COLOR[liveStatus] ?? "var(--muted-2)";
+                const isDraft = liveStatus === "draft";
+                const isPending = pendingIds.has(post.id);
+
                 return (
                   <div
                     key={post.id}
@@ -316,35 +332,61 @@ export function XCalendar({ posts }: { posts: Post[] }) {
                     <span style={{
                       width: 7, height: 7, borderRadius: "50%",
                       background: dot, flexShrink: 0,
-                      boxShadow: post.status === "approved" ? "0 0 6px rgba(74,222,128,0.45)" : "none",
+                      boxShadow: liveStatus === "approved" ? "0 0 6px rgba(74,222,128,0.45)" : "none",
                     }} />
                     <span style={{
                       fontSize: "0.775rem", color: "var(--muted)",
                       width: 92, flexShrink: 0, fontVariantNumeric: "tabular-nums",
-                    }}>
-                      {time}
-                    </span>
+                    }}>{time}</span>
                     <span style={{
                       fontSize: "0.65rem", fontWeight: 600, padding: "2px 8px",
                       borderRadius: 5, flexShrink: 0,
-                      background: "rgba(255,255,255,0.05)",
-                      color: "var(--muted)",
-                    }}>
-                      {getTypeName(post.post_type)}
-                    </span>
+                      background: "rgba(255,255,255,0.05)", color: "var(--muted)",
+                    }}>{getTypeName(post.post_type)}</span>
                     <span style={{
                       flex: 1, fontSize: "0.82rem", color: "var(--fg)",
                       overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap",
-                    }}>
-                      {post.content}
-                    </span>
-                    <span style={{
-                      fontSize: "0.68rem", fontWeight: 600,
-                      padding: "3px 9px", borderRadius: 5, flexShrink: 0,
-                      ...statusStyle(post.status),
-                    }}>
-                      {statusLabel(post.status)}
-                    </span>
+                    }}>{post.content}</span>
+
+                    {isDraft ? (
+                      <div
+                        style={{ display: "flex", gap: "0.375rem", flexShrink: 0 }}
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <button
+                          onClick={e => handleInlineStatus(post.id, "rejected", e)}
+                          disabled={isPending}
+                          title="Reject"
+                          style={{
+                            padding: "4px 9px", border: "none", borderRadius: 5,
+                            background: "rgba(248,113,113,0.1)", color: "#f87171",
+                            fontSize: "0.7rem", fontWeight: 700,
+                            cursor: isPending ? "wait" : "pointer",
+                            opacity: isPending ? 0.4 : 1,
+                          }}
+                        >✕</button>
+                        <button
+                          onClick={e => handleInlineStatus(post.id, "approved", e)}
+                          disabled={isPending}
+                          style={{
+                            padding: "4px 12px", border: "none", borderRadius: 5,
+                            background: "rgba(109,107,245,0.85)", color: "#fff",
+                            fontSize: "0.7rem", fontWeight: 700,
+                            cursor: isPending ? "wait" : "pointer",
+                            opacity: isPending ? 0.4 : 1,
+                            boxShadow: "0 0 10px rgba(109,107,245,0.3)",
+                          }}
+                        >Approve</button>
+                      </div>
+                    ) : (
+                      <span style={{
+                        fontSize: "0.68rem", fontWeight: 600,
+                        padding: "3px 9px", borderRadius: 5, flexShrink: 0,
+                        ...statusStyle(liveStatus),
+                      }}>
+                        {statusLabel(liveStatus)}
+                      </span>
+                    )}
                   </div>
                 );
               })}
@@ -353,7 +395,14 @@ export function XCalendar({ posts }: { posts: Post[] }) {
         })}
       </div>
 
-      {selected && <PostModal post={selected} onClose={() => setSelected(null)} />}
+      {selected && (
+        <PostModal
+          post={selected}
+          localStatus={getStatus(selected)}
+          onClose={() => setSelected(null)}
+          onStatusChange={s => setLocalStatuses(prev => ({ ...prev, [selected.id]: s }))}
+        />
+      )}
     </>
   );
 }

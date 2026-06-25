@@ -66,7 +66,7 @@ export default async function LinkedInSchedulePage() {
         <h1 style={{ fontSize: "1.3rem", fontWeight: 700, letterSpacing: "-0.025em", margin: 0 }}>LinkedIn Calendar</h1>
       </div>
 
-      <LinkedInCalendar posts={allPosts} />
+      <LinkedInCalendar posts={allPosts} strategyId={strategy.id} />
     </div>
   );
 }
