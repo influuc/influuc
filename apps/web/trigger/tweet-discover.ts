@@ -54,14 +54,19 @@ async function searchRecentTweets(topics: string[]): Promise<{ tweets: XTweet[];
   const bearerToken = process.env.X_BEARER_TOKEN;
   if (!bearerToken) throw new Error("X_BEARER_TOKEN not set");
 
-  // Up to 3 topics joined with OR, exclude retweets + replies, English only
+  // Verified accounts only, exclude retweets + replies, English, last 24h
   const topicQuery = topics.slice(0, 3).map(t => `"${t}"`).join(" OR ");
-  const query = `(${topicQuery}) -is:retweet -is:reply lang:en`;
+  const query = `(${topicQuery}) is:verified -is:retweet -is:reply lang:en`;
+
+  // last 24 hours only
+  const startTime = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
   const params = new URLSearchParams({
     query,
-    max_results: "10",
-    "tweet.fields": "public_metrics,author_id",
+    max_results: "25",
+    start_time: startTime,
+    sort_order: "relevancy",
+    "tweet.fields": "public_metrics,author_id,created_at",
     "expansions": "author_id",
     "user.fields": "username,name",
   });
@@ -78,7 +83,18 @@ async function searchRecentTweets(topics: string[]): Promise<{ tweets: XTweet[];
     includes?: { users?: XUser[] };
   };
 
-  return { tweets: data.data ?? [], users: data.includes?.users ?? [] };
+  const allTweets = data.data ?? [];
+
+  // Sort by engagement score (likes + 3× retweets) and drop anything with < 5 likes
+  const tweets = allTweets
+    .filter(t => t.public_metrics.like_count >= 5)
+    .sort((a, b) =>
+      (b.public_metrics.like_count + b.public_metrics.retweet_count * 3) -
+      (a.public_metrics.like_count + a.public_metrics.retweet_count * 3)
+    )
+    .slice(0, 10); // top 10 by engagement to LLM
+
+  return { tweets, users: data.includes?.users ?? [] };
 }
 
 async function pickAndGenerate(
@@ -93,7 +109,8 @@ async function pickAndGenerate(
   const userMap = Object.fromEntries(users.map(u => [u.id, u]));
   const tweetList = tweets.map((t, i) => {
     const author = userMap[t.author_id];
-    return `[${i + 1}] Tweet ID: ${t.id}\n@${author?.username ?? "unknown"} (${t.public_metrics.like_count} likes): ${t.text}`;
+    const engagement = `${t.public_metrics.like_count} likes, ${t.public_metrics.retweet_count} RTs, ${t.public_metrics.reply_count} replies`;
+    return `[${i + 1}] Tweet ID: ${t.id}\n@${author?.username ?? "unknown"} (${engagement}):\n${t.text}`;
   }).join("\n\n");
 
   const prompt = `You manage X (Twitter) for a founder. Pick the best tweet to quote-tweet and write a punchy, opinionated response.
@@ -106,7 +123,7 @@ TOPICS: ${topics.join(", ")}
 RECENT TWEETS:
 ${tweetList}
 
-Pick the ONE tweet that will start the best conversation given the founder's expertise. Write an opinion that agree, disagrees, or adds a surprising angle.
+Pick the ONE tweet that will start the best conversation. Prefer tweets with high engagement (likes + RTs) — those are already going viral and will give the quote tweet maximum reach. Write an opinion that agrees, disagrees, or adds a surprising angle.
 
 Rules:
 - Opinion under 260 characters
