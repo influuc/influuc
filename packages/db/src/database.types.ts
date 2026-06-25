@@ -1318,6 +1318,9 @@ export type Database = {
           published_at: string | null
           scheduled_date: string
           sort_order: number
+          source_tweet_author: string | null
+          source_tweet_content: string | null
+          source_tweet_id: string | null
           status: string
           strategy_id: string
           updated_at: string
@@ -1333,6 +1336,9 @@ export type Database = {
           published_at?: string | null
           scheduled_date: string
           sort_order?: number
+          source_tweet_author?: string | null
+          source_tweet_content?: string | null
+          source_tweet_id?: string | null
           status?: string
           strategy_id: string
           updated_at?: string
@@ -1348,6 +1354,9 @@ export type Database = {
           published_at?: string | null
           scheduled_date?: string
           sort_order?: number
+          source_tweet_author?: string | null
+          source_tweet_content?: string | null
+          source_tweet_id?: string | null
           status?: string
           strategy_id?: string
           updated_at?: string

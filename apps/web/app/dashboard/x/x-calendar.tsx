@@ -10,15 +10,21 @@ type Post = {
   status: string;
   sort_order: number;
   scheduled_date: string;
+  source_tweet_id?: string | null;
+  source_tweet_content?: string | null;
+  source_tweet_author?: string | null;
 };
 
 function getPostTime(postType: string, sortOrder: number): string {
   if (postType === "x_long") return "7:00 PM IST";
+  if (postType === "x_quote_tweet") return "10:30 AM IST";
   return sortOrder === 0 ? "9:00 AM IST" : "1:00 PM IST";
 }
 
 function getTypeName(postType: string): string {
-  return postType === "x_long" ? "Long Form" : "Single Post";
+  if (postType === "x_long") return "Long Form";
+  if (postType === "x_quote_tweet") return "Quote Tweet";
+  return "Single Post";
 }
 
 function groupByDate(posts: Post[]) {
@@ -208,6 +214,24 @@ function PostModal({ post, localStatus, onClose, onStatusChange }: {
               fontSize: "0.875rem", color: "#e7e9ea", lineHeight: 1.65, margin: 0,
               whiteSpace: "pre-wrap", fontFamily: "system-ui, -apple-system, sans-serif",
             }}>{post.content}</p>
+
+            {/* Source tweet card for quote tweets */}
+            {post.post_type === "x_quote_tweet" && post.source_tweet_content && (
+              <div style={{
+                marginTop: "0.75rem",
+                border: "1px solid rgba(255,255,255,0.12)",
+                borderRadius: 10,
+                padding: "0.75rem 0.875rem",
+              }}>
+                <p style={{ fontSize: "0.7rem", fontWeight: 600, color: "rgba(255,255,255,0.4)", margin: "0 0 0.35rem" }}>
+                  {post.source_tweet_author ?? "Original tweet"}
+                </p>
+                <p style={{
+                  fontSize: "0.8rem", color: "rgba(255,255,255,0.65)", lineHeight: 1.55, margin: 0,
+                  whiteSpace: "pre-wrap", fontFamily: "system-ui, -apple-system, sans-serif",
+                }}>{post.source_tweet_content}</p>
+              </div>
+            )}
           </div>
         </div>
 
