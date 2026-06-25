@@ -43,6 +43,14 @@ function fmtDateHeader(dateStr: string) {
   };
 }
 
+const TODAY = new Date().toISOString().slice(0, 10);
+
+// If approved but the scheduled date is in the past, treat as published in the UI
+function liveStatusFor(dbStatus: string, scheduledDate: string): string {
+  if ((dbStatus === "approved" || dbStatus === "scheduled") && scheduledDate < TODAY) return "published";
+  return dbStatus;
+}
+
 const STATUS_COLOR: Record<string, string> = {
   draft:     "rgba(255,255,255,0.2)",
   approved:  "#4ade80",
@@ -259,11 +267,11 @@ export function XCalendar({ posts, strategyId }: { posts: Post[]; strategyId: st
   const [localStatuses, setLocalStatuses] = useState<Record<string, string>>({});
   const [approvingAll, startApprovingAll] = useTransition();
 
-  const getStatus = (p: Post) => localStatuses[p.id] ?? p.status;
+  const getStatus = (p: Post) => liveStatusFor(localStatuses[p.id] ?? p.status, p.scheduled_date);
   const groups = groupByDate(posts);
   const draftCount = posts.filter(p => getStatus(p) === "draft").length;
-  const scheduled = posts.filter(p => ["approved", "scheduled"].includes(getStatus(p))).length;
-  const published = posts.filter(p => getStatus(p) === "published").length;
+  const scheduled  = posts.filter(p => getStatus(p) === "approved").length;
+  const published  = posts.filter(p => getStatus(p) === "published").length;
 
   function handleApproveAll() {
     const optimistic: Record<string, string> = {};
