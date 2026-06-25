@@ -54,9 +54,9 @@ async function searchRecentTweets(topics: string[]): Promise<{ tweets: XTweet[];
   const bearerToken = process.env.X_BEARER_TOKEN;
   if (!bearerToken) throw new Error("X_BEARER_TOKEN not set");
 
-  // Up to 3 topics joined with OR, exclude retweets + replies, English, min 20 likes
+  // Up to 3 topics joined with OR, exclude retweets + replies, English only
   const topicQuery = topics.slice(0, 3).map(t => `"${t}"`).join(" OR ");
-  const query = `(${topicQuery}) -is:retweet -is:reply lang:en min_faves:20`;
+  const query = `(${topicQuery}) -is:retweet -is:reply lang:en`;
 
   const params = new URLSearchParams({
     query,
