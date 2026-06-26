@@ -274,6 +274,7 @@ export const postPublish = task({
       .update({
         status: "published",
         published_at: new Date().toISOString(),
+        platform_post_id: platformPostId,
         guardrail_verdict: "pass",
         guardrail_reasons: guard.reasons,
         guardrail_brand_fit: guard.brandFit,

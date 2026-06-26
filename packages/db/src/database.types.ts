@@ -811,6 +811,56 @@ export type Database = {
           },
         ]
       }
+      post_metrics: {
+        Row: {
+          collected_at: string
+          engagement: number
+          founder_id: string
+          id: string
+          impressions: number | null
+          likes: number
+          platform: string
+          post_id: string
+          quotes: number
+          replies: number
+          reposts: number
+        }
+        Insert: {
+          collected_at?: string
+          engagement?: number
+          founder_id: string
+          id?: string
+          impressions?: number | null
+          likes?: number
+          platform: string
+          post_id: string
+          quotes?: number
+          replies?: number
+          reposts?: number
+        }
+        Update: {
+          collected_at?: string
+          engagement?: number
+          founder_id?: string
+          id?: string
+          impressions?: number | null
+          likes?: number
+          platform?: string
+          post_id?: string
+          quotes?: number
+          replies?: number
+          reposts?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "post_metrics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "weekly_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       operating_preferences: {
         Row: {
           approval_threshold: number | null
@@ -1386,6 +1436,7 @@ export type Database = {
           guardrail_verdict: string | null
           id: string
           platform: string
+          platform_post_id: string | null
           post_type: string
           published_at: string | null
           scheduled_date: string
@@ -1408,6 +1459,7 @@ export type Database = {
           guardrail_verdict?: string | null
           id?: string
           platform: string
+          platform_post_id?: string | null
           post_type: string
           published_at?: string | null
           scheduled_date: string
@@ -1430,6 +1482,7 @@ export type Database = {
           guardrail_verdict?: string | null
           id?: string
           platform?: string
+          platform_post_id?: string | null
           post_type?: string
           published_at?: string | null
           scheduled_date?: string
