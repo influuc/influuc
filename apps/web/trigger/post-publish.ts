@@ -126,8 +126,17 @@ export const postPublish = task({
       .eq("id", payload.postId)
       .eq("status", "scheduled");
 
-    // If token-related error, mark connection so the reauth banner appears
-    if (post && (errStr.includes("token refresh failed") || errStr.includes("invalid_client") || errStr.includes("No active"))) {
+    // If token/auth-related error, mark connection so the reauth banner appears.
+    // Covers refresh failures AND a 401/403 on the publish call itself — critical for
+    // LinkedIn, whose tokens expire (~60d) with no refresh token to fall back on.
+    const isAuthError =
+      errStr.includes("token refresh failed") ||
+      errStr.includes("invalid_client") ||
+      errStr.includes("No active") ||
+      errStr.includes("failed (401)") ||
+      errStr.includes("failed (403)");
+
+    if (post && isAuthError) {
       await db
         .from("platform_connections")
         .update({ status: "needs_reauth" })
@@ -146,7 +155,7 @@ export const postPublish = task({
           if (email) {
             const { Resend } = await import("resend");
             const resend = new Resend(process.env.RESEND_API_KEY);
-            const isTokenError = errStr.includes("token refresh failed") || errStr.includes("invalid_client");
+            const isTokenError = isAuthError;
             await resend.emails.send({
               from: process.env.RESEND_FROM_EMAIL ?? "Influuc <onboarding@resend.dev>",
               to: [email],

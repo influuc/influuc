@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getCurrentFounder } from "@/lib/founder";
 import { createServiceClient } from "@/lib/supabase/service";
+import { captureException } from "@/lib/observability";
 
 const OPENROUTER_BASE = "https://openrouter.ai/api/v1";
 const WRITER_MODEL = "anthropic/claude-haiku-4-5";
@@ -178,7 +179,8 @@ export async function POST(
     await db.from("opportunities").update({ status: "accepted" }).eq("id", id);
 
     return NextResponse.json({ ok: true, status: "accepted", postId: post.id, content });
-  } catch {
+  } catch (err) {
+    captureException(err, { route: "opportunities/action", opportunityId: id });
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 }
