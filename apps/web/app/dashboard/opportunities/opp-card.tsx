@@ -46,6 +46,7 @@ export function OppCard({
 }: OppCardProps) {
   const [status, setStatus] = useState(initialStatus);
   const [loading, setLoading] = useState<"accept" | "dismiss" | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const meta = TYPE_META[type] ?? { label: type, color: "var(--muted)", bg: "rgba(255,255,255,0.06)" };
   const pColor = priorityColor(priority_score);
@@ -54,13 +55,21 @@ export function OppCard({
 
   async function act(action: "accept" | "dismiss") {
     setLoading(action);
+    setError(null);
     try {
       const res = await fetch(`/api/opportunities/${id}/action`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action }),
       });
-      if (res.ok) setStatus(action === "accept" ? "accepted" : "dismissed");
+      if (res.ok) {
+        setStatus(action === "accept" ? "accepted" : "dismissed");
+      } else {
+        const body = await res.json().catch(() => ({}));
+        setError(body.error ?? "Something went wrong");
+      }
+    } catch {
+      setError("Network error");
     } finally {
       setLoading(null);
     }
@@ -207,24 +216,37 @@ export function OppCard({
                     color: "var(--accent-fg)",
                     cursor: "pointer",
                     opacity: loading === "accept" ? 0.5 : 1,
+                    display: "flex", alignItems: "center", gap: "0.35rem",
                   }}
                 >
-                  {loading === "accept" ? "…" : "Save"}
+                  {loading === "accept" ? "Writing…" : "✍ Write post"}
                 </button>
               </>
             ) : (
-              <span style={{
+              <a href="/dashboard/x" style={{
                 fontSize: "0.72rem", fontWeight: 600,
                 padding: "0.3rem 0.75rem", borderRadius: 7,
                 background: "rgba(74,222,128,0.1)",
                 color: "#4ade80",
+                textDecoration: "none",
+                display: "flex", alignItems: "center", gap: "0.35rem",
               }}>
-                ✓ Saved
-              </span>
+                ✓ Draft ready — review in X →
+              </a>
             )}
           </div>
         )}
       </div>
+
+      {error && (
+        <p style={{
+          margin: 0, fontSize: "0.72rem", color: "#f87171",
+          padding: "0.4rem 0.6rem", borderRadius: 6,
+          background: "rgba(248,113,113,0.08)",
+        }}>
+          {error}
+        </p>
+      )}
     </div>
   );
 }
