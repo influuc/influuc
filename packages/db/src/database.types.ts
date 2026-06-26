@@ -1380,6 +1380,10 @@ export type Database = {
           content: string
           created_at: string
           founder_id: string
+          guardrail_brand_fit: number | null
+          guardrail_checked_at: string | null
+          guardrail_reasons: string | null
+          guardrail_verdict: string | null
           id: string
           platform: string
           post_type: string
@@ -1398,6 +1402,10 @@ export type Database = {
           content: string
           created_at?: string
           founder_id: string
+          guardrail_brand_fit?: number | null
+          guardrail_checked_at?: string | null
+          guardrail_reasons?: string | null
+          guardrail_verdict?: string | null
           id?: string
           platform: string
           post_type: string
@@ -1416,6 +1424,10 @@ export type Database = {
           content?: string
           created_at?: string
           founder_id?: string
+          guardrail_brand_fit?: number | null
+          guardrail_checked_at?: string | null
+          guardrail_reasons?: string | null
+          guardrail_verdict?: string | null
           id?: string
           platform?: string
           post_type?: string

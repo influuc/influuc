@@ -1,6 +1,7 @@
 import { task, logger } from "@trigger.dev/sdk/v3";
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "@influuc/db";
+import { runGuardrail } from "./guardrail";
 
 if (typeof globalThis.WebSocket === "undefined") {
   // @ts-ignore
@@ -224,6 +225,40 @@ export const postPublish = task({
       accessToken = refreshed.accessToken;
     }
 
+    // ── Guardrail: safety / prohibited / brand-fit check before publishing ────
+    const [{ data: prefs }, { data: brandFacts }] = await Promise.all([
+      db.from("operating_preferences").select("prohibited_topics").eq("founder_id", founderId).single(),
+      db.from("brain_facts")
+        .select("layer, content")
+        .eq("founder_id", founderId)
+        .eq("status", "active")
+        .in("layer", ["positioning", "belief", "writing_style"])
+        .limit(10),
+    ]);
+
+    const brandContext = (brandFacts ?? []).map((f) => `[${f.layer}] ${f.content}`).join("\n");
+    const guard = await runGuardrail({
+      content: post.content,
+      platform,
+      prohibitedTopics: (prefs?.prohibited_topics as string[] | null) ?? [],
+      brandContext,
+    });
+
+    if (guard.verdict === "fail") {
+      await db
+        .from("weekly_posts")
+        .update({
+          status: "blocked",
+          guardrail_verdict: "fail",
+          guardrail_reasons: guard.reasons,
+          guardrail_brand_fit: guard.brandFit,
+          guardrail_checked_at: new Date().toISOString(),
+        })
+        .eq("id", postId);
+      logger.warn("post.publish: BLOCKED by guardrail", { postId, reasons: guard.reasons });
+      return { skipped: true, reason: "guardrail_blocked", details: guard.reasons };
+    }
+
     // Publish
     let platformPostId: string;
     const personId = conn.platform_user_id ?? "";
@@ -236,10 +271,17 @@ export const postPublish = task({
 
     await db
       .from("weekly_posts")
-      .update({ status: "published", published_at: new Date().toISOString() })
+      .update({
+        status: "published",
+        published_at: new Date().toISOString(),
+        guardrail_verdict: "pass",
+        guardrail_reasons: guard.reasons,
+        guardrail_brand_fit: guard.brandFit,
+        guardrail_checked_at: new Date().toISOString(),
+      })
       .eq("id", postId);
 
-    logger.info("post.publish: done", { postId, platformPostId, platform });
+    logger.info("post.publish: done", { postId, platformPostId, platform, brandFit: guard.brandFit });
     return { platformPostId, platform };
   },
 });

@@ -67,6 +67,7 @@ function statusLabel(status: string) {
   if (status === "published") return "Published";
   if (status === "rejected")  return "Rejected";
   if (status === "failed")    return "Failed";
+  if (status === "blocked")   return "Blocked";
   return status;
 }
 
@@ -75,6 +76,7 @@ function statusStyle(status: string): React.CSSProperties {
   if (status === "published") return { background: "rgba(74,222,128,0.1)", color: "#4ade80" };
   if (status === "rejected")  return { background: "rgba(248,113,113,0.1)", color: "#f87171" };
   if (status === "failed")    return { background: "rgba(251,146,60,0.1)", color: "#fb923c" };
+  if (status === "blocked")   return { background: "rgba(248,113,113,0.14)", color: "#f87171" };
   return { background: "rgba(255,255,255,0.06)", color: "var(--muted-2)" };
 }
 
