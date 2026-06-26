@@ -55,6 +55,17 @@ async function refreshAccessToken(platform: "x" | "linkedin", refreshToken: stri
   }
 }
 
+// X charges $0.20/post when a URL is present (vs $0.015 plain). We never post URLs —
+// strip any the model slipped in so a stray link can't trigger the 13x charge.
+function stripUrls(text: string): string {
+  return text
+    .replace(/\bhttps?:\/\/\S+/gi, "")
+    .replace(/\bwww\.\S+/gi, "")
+    .replace(/[ \t]{2,}/g, " ")
+    .replace(/\n{3,}/g, "\n\n")
+    .trim();
+}
+
 async function postToX(accessToken: string, text: string): Promise<string> {
   const res = await fetch("https://api.twitter.com/2/tweets", {
     method: "POST",
@@ -264,7 +275,9 @@ export const postPublish = task({
     const personId = conn.platform_user_id ?? "";
 
     if (platform === "x") {
-      platformPostId = await postToX(accessToken, post.content);
+      const cleaned = stripUrls(post.content);
+      if (cleaned !== post.content) logger.warn("post.publish: stripped URL(s) from X post", { postId });
+      platformPostId = await postToX(accessToken, cleaned);
     } else {
       platformPostId = await postToLinkedIn(accessToken, personId, post.content);
     }

@@ -81,7 +81,7 @@ interface XMetrics { retweet_count: number; reply_count: number; like_count: num
 
 export const postMetrics = schedules.task({
   id: "post.metrics",
-  cron: "0 */6 * * *", // every 6 hours
+  cron: "0 16 * * 0", // Sundays 16:00 UTC — once weekly, right before learning.aggregate (17:00)
   maxDuration: 300,
 
   run: async () => {
