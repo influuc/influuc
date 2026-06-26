@@ -861,6 +861,45 @@ export type Database = {
           },
         ]
       }
+      discovery_pool: {
+        Row: {
+          cluster: string
+          created_at: string
+          dedupe_hash: string
+          harvested_date: string
+          id: string
+          published_at: string | null
+          source_kind: string
+          source_url: string
+          summary: string | null
+          title: string
+        }
+        Insert: {
+          cluster: string
+          created_at?: string
+          dedupe_hash: string
+          harvested_date?: string
+          id?: string
+          published_at?: string | null
+          source_kind: string
+          source_url: string
+          summary?: string | null
+          title: string
+        }
+        Update: {
+          cluster?: string
+          created_at?: string
+          dedupe_hash?: string
+          harvested_date?: string
+          id?: string
+          published_at?: string | null
+          source_kind?: string
+          source_url?: string
+          summary?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
       operating_preferences: {
         Row: {
           approval_threshold: number | null
