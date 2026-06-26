@@ -3,6 +3,7 @@ import { createServiceClient } from "@/lib/supabase/service";
 import { redirect } from "next/navigation";
 import { SettingsForm } from "./settings-form";
 import { RegenerateWeekBtn } from "./regenerate-week-btn";
+import { KillSwitch } from "./kill-switch";
 
 const PLATFORM_LABELS: Record<string, string> = { x: "X (Twitter)", linkedin: "LinkedIn" };
 const PLATFORM_ICONS: Record<string, string> = { x: "𝕏", linkedin: "in" };
@@ -22,7 +23,7 @@ export default async function SettingsPage() {
   const db = createServiceClient();
   const [{ data: prefs }, { data: connections }] = await Promise.all([
     db.from("operating_preferences")
-      .select("mode, focus_topics, content_goals, tone, prohibited_topics, extra_notes, max_autopilot_per_day")
+      .select("mode, focus_topics, content_goals, tone, prohibited_topics, extra_notes, max_autopilot_per_day, publishing_paused")
       .eq("founder_id", founder.id)
       .single(),
     db.from("platform_connections")
@@ -49,6 +50,8 @@ export default async function SettingsPage() {
           Content preferences and autopilot mode. Changes take effect on your next content generation.
         </p>
       </div>
+
+      <KillSwitch initialPaused={prefs?.publishing_paused ?? false} />
 
       <SettingsForm
         initialMode={(prefs?.mode as "manual" | "assisted" | "autopilot") ?? "assisted"}

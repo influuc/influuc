@@ -52,12 +52,13 @@ export default async function DashboardPage() {
 
   const [{ count: factCount }, { data: prefs }, { data: strategy }] = await Promise.all([
     db.from("brain_facts").select("*", { count: "exact", head: true }).eq("founder_id", founder.id).eq("status", "active"),
-    db.from("operating_preferences").select("mode").eq("founder_id", founder.id).single(),
+    db.from("operating_preferences").select("mode, publishing_paused").eq("founder_id", founder.id).single(),
     db.from("weekly_strategies").select("id, week_start, strategy").eq("founder_id", founder.id).order("created_at", { ascending: false }).limit(1).single(),
   ]);
 
   const mode = prefs?.mode ?? "assisted";
   const modeLabel = mode === "assisted" ? "Automatic" : mode === "autopilot" ? "Autopilot" : "Manual";
+  const publishingPaused = prefs?.publishing_paused ?? false;
   const firstName = founder.display_name?.split(" ")[0] ?? "there";
   const strat = strategy?.strategy as { summary?: string } | undefined;
 
@@ -162,6 +163,23 @@ export default async function DashboardPage() {
       gap: "1.5rem",
     }}>
       <ReauthBanner founderId={founder.id} />
+      {publishingPaused && (
+        <Link href="/dashboard/settings" style={{ textDecoration: "none" }}>
+          <div style={{
+            padding: "0.75rem 1.25rem", borderRadius: "var(--radius)",
+            background: "rgba(248,113,113,0.07)", border: "1px solid rgba(248,113,113,0.25)",
+            display: "flex", alignItems: "center", gap: "0.75rem",
+          }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#f87171" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="6" y="4" width="4" height="16" rx="1" /><rect x="14" y="4" width="4" height="16" rx="1" />
+            </svg>
+            <span style={{ fontSize: "0.82rem", fontWeight: 600, color: "#f87171" }}>Publishing is paused</span>
+            <span style={{ fontSize: "0.78rem", color: "var(--muted)" }}>
+              No posts will go out until you resume. Manage in Settings →
+            </span>
+          </div>
+        </Link>
+      )}
       {founder.reflection_pending && <ReflectionBanner />}
 
       <GreetingHeader

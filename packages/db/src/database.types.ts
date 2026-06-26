@@ -826,6 +826,7 @@ export type Database = {
             | Database["public"]["Enums"]["target_platform"][]
             | null
           prohibited_topics: string[] | null
+          publishing_paused: boolean
           tone: string | null
           updated_at: string
         }
@@ -843,6 +844,7 @@ export type Database = {
             | Database["public"]["Enums"]["target_platform"][]
             | null
           prohibited_topics?: string[] | null
+          publishing_paused?: boolean
           tone?: string | null
           updated_at?: string
         }
@@ -860,6 +862,7 @@ export type Database = {
             | Database["public"]["Enums"]["target_platform"][]
             | null
           prohibited_topics?: string[] | null
+          publishing_paused?: boolean
           tone?: string | null
           updated_at?: string
         }

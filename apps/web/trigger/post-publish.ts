@@ -175,6 +175,20 @@ export const postPublish = task({
       return { skipped: true, reason: `unexpected_status_${post.status}` };
     }
 
+    // Kill-switch guard — if publishing was paused after this post was claimed,
+    // bail and release it back to approved so it isn't lost.
+    const { data: pref } = await db
+      .from("operating_preferences")
+      .select("publishing_paused")
+      .eq("founder_id", founderId)
+      .single();
+
+    if (pref?.publishing_paused) {
+      await db.from("weekly_posts").update({ status: "approved" }).eq("id", postId).eq("status", "scheduled");
+      logger.warn("post.publish: publishing paused (kill-switch) — released post", { postId });
+      return { skipped: true, reason: "publishing_paused" };
+    }
+
     const { data: conn, error: connErr } = await db
       .from("platform_connections")
       .select("access_token_ref, refresh_token_ref, token_expires_at, platform_user_id")

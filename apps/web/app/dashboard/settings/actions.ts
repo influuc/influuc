@@ -6,6 +6,21 @@ import { revalidatePath } from "next/cache";
 
 export type AutonomyMode = "manual" | "assisted" | "autopilot";
 
+/** Kill-switch: instantly pause/resume all publishing for this founder. */
+export async function setPublishingPaused(paused: boolean) {
+  const founder = await getCurrentFounder();
+  const db = createServiceClient();
+
+  await db
+    .from("operating_preferences")
+    .update({ publishing_paused: paused })
+    .eq("founder_id", founder.id);
+
+  revalidatePath("/dashboard");
+  revalidatePath("/dashboard/settings");
+  return { paused };
+}
+
 export async function updateSettings(formData: FormData) {
   const founder = await getCurrentFounder();
   const db = createServiceClient();
