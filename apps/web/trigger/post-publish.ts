@@ -54,13 +54,11 @@ async function refreshAccessToken(platform: "x" | "linkedin", refreshToken: stri
   }
 }
 
-async function postToX(accessToken: string, text: string, quoteTweetId?: string | null): Promise<string> {
-  const body: Record<string, string> = { text };
-  if (quoteTweetId) body.quote_tweet_id = quoteTweetId;
+async function postToX(accessToken: string, text: string): Promise<string> {
   const res = await fetch("https://api.twitter.com/2/tweets", {
     method: "POST",
     headers: { Authorization: `Bearer ${accessToken}`, "Content-Type": "application/json" },
-    body: JSON.stringify(body),
+    body: JSON.stringify({ text }),
   });
   if (!res.ok) throw new Error(`X post failed (${res.status}): ${await res.text()}`);
   const j = await res.json() as { data: { id: string } };
@@ -161,7 +159,7 @@ export const postPublish = task({
 
     const { data: post, error: postErr } = await db
       .from("weekly_posts")
-      .select("id, founder_id, platform, post_type, content, status, source_tweet_id")
+      .select("id, founder_id, platform, post_type, content, status")
       .eq("id", postId)
       .eq("founder_id", founderId)
       .single();
@@ -217,7 +215,7 @@ export const postPublish = task({
     const personId = conn.platform_user_id ?? "";
 
     if (platform === "x") {
-      platformPostId = await postToX(accessToken, post.content, post.source_tweet_id);
+      platformPostId = await postToX(accessToken, post.content);
     } else {
       platformPostId = await postToLinkedIn(accessToken, personId, post.content);
     }

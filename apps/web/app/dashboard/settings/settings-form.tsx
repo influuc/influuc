@@ -32,6 +32,7 @@ export interface SettingsFormProps {
   initialTone: string;
   initialProhibitedTopics: string[];
   initialExtraNotes: string;
+  initialMaxPerDay: number;
 }
 
 function TagInput({ tags, setTags, placeholder }: { tags: string[]; setTags: (t: string[]) => void; placeholder: string }) {
@@ -68,9 +69,10 @@ function TagInput({ tags, setTags, placeholder }: { tags: string[]; setTags: (t:
   );
 }
 
-export function SettingsForm({ initialMode, initialFocusTopics, initialContentGoals, initialTone, initialProhibitedTopics, initialExtraNotes }: SettingsFormProps) {
+export function SettingsForm({ initialMode, initialFocusTopics, initialContentGoals, initialTone, initialProhibitedTopics, initialExtraNotes, initialMaxPerDay }: SettingsFormProps) {
   const [mode, setMode] = useState<"manual" | "assisted" | "autopilot">(initialMode);
   const [autopilotAck, setAutopilotAck] = useState(initialMode === "autopilot");
+  const [maxPerDay, setMaxPerDay] = useState(initialMaxPerDay);
   const [focusTopics, setFocusTopics] = useState(initialFocusTopics);
   const [contentGoals, setContentGoals] = useState(initialContentGoals);
   const [tone, setTone] = useState(initialTone || "direct");
@@ -85,6 +87,7 @@ export function SettingsForm({ initialMode, initialFocusTopics, initialContentGo
       const fd = new FormData();
       fd.set("mode", mode);
       fd.set("autopilot_ack", autopilotAck ? "on" : "off");
+      fd.set("max_autopilot_per_day", String(maxPerDay));
       focusTopics.forEach(t => fd.append("focus_topics", t));
       contentGoals.forEach(g => fd.append("content_goals", g));
       prohibitedTopics.forEach(t => fd.append("prohibited_topics", t));
@@ -132,17 +135,47 @@ export function SettingsForm({ initialMode, initialFocusTopics, initialContentGo
             );
           })}
           {mode === "autopilot" && (
-            <label style={{
-              display: "flex", gap: "0.75rem", padding: "0.875rem 1rem", borderRadius: "var(--radius)",
-              border: "1px solid rgba(248,113,113,0.2)", background: "rgba(248,113,113,0.04)",
-              cursor: "pointer", alignItems: "flex-start",
-            }}>
-              <input type="checkbox" checked={autopilotAck} onChange={e => setAutopilotAck(e.target.checked)}
-                style={{ marginTop: 2, accentColor: "var(--accent)", flexShrink: 0 }} />
-              <span style={{ fontSize: "0.8rem", color: "var(--muted)", lineHeight: 1.6 }}>
-                I understand Influuc will publish posts automatically on my behalf. I can set a daily cap, undo any post, and switch modes at any time.
-              </span>
-            </label>
+            <div style={{ display: "flex", flexDirection: "column", gap: "0.625rem" }}>
+              {/* Daily cap */}
+              <div style={{
+                padding: "0.875rem 1rem", borderRadius: "var(--radius)",
+                border: "1px solid var(--border)", background: "rgba(255,255,255,0.02)",
+                display: "flex", alignItems: "center", justifyContent: "space-between", gap: "1rem",
+              }}>
+                <div>
+                  <p style={{ margin: 0, fontWeight: 600, fontSize: "0.85rem", color: "var(--fg)" }}>Daily post cap</p>
+                  <p style={{ margin: "2px 0 0", fontSize: "0.72rem", color: "var(--muted)" }}>
+                    Max posts autopilot can publish per day
+                  </p>
+                </div>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.5rem", flexShrink: 0 }}>
+                  <button type="button" onClick={() => setMaxPerDay(v => Math.max(1, v - 1))}
+                    style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--border)", background: "rgba(255,255,255,0.05)", color: "var(--fg)", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    −
+                  </button>
+                  <span style={{ fontSize: "1rem", fontWeight: 700, color: "var(--fg)", minWidth: 24, textAlign: "center" }}>
+                    {maxPerDay}
+                  </span>
+                  <button type="button" onClick={() => setMaxPerDay(v => Math.min(10, v + 1))}
+                    style={{ width: 28, height: 28, borderRadius: 7, border: "1px solid var(--border)", background: "rgba(255,255,255,0.05)", color: "var(--fg)", cursor: "pointer", fontSize: "1rem", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    +
+                  </button>
+                </div>
+              </div>
+
+              {/* Acknowledgment */}
+              <label style={{
+                display: "flex", gap: "0.75rem", padding: "0.875rem 1rem", borderRadius: "var(--radius)",
+                border: "1px solid rgba(248,113,113,0.2)", background: "rgba(248,113,113,0.04)",
+                cursor: "pointer", alignItems: "flex-start",
+              }}>
+                <input type="checkbox" checked={autopilotAck} onChange={e => setAutopilotAck(e.target.checked)}
+                  style={{ marginTop: 2, accentColor: "var(--accent)", flexShrink: 0 }} />
+                <span style={{ fontSize: "0.8rem", color: "var(--muted)", lineHeight: 1.6 }}>
+                  I understand Influuc will publish up to {maxPerDay} post{maxPerDay !== 1 ? "s" : ""} per day automatically on my behalf. I can change this cap or switch modes at any time.
+                </span>
+              </label>
+            </div>
           )}
         </div>
       </Section>

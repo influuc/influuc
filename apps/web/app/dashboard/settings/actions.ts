@@ -17,6 +17,7 @@ export async function updateSettings(formData: FormData) {
   const prohibitedTopics = formData.getAll("prohibited_topics").map(String).filter(Boolean);
   const tone = (formData.get("tone") as string | null)?.trim() ?? null;
   const extraNotes = (formData.get("extra_notes") as string | null)?.trim() ?? null;
+  const maxPerDay = Math.min(10, Math.max(1, parseInt(formData.get("max_autopilot_per_day") as string ?? "3", 10)));
 
   if (mode === "autopilot" && !autopilotAck) {
     throw new Error("Autopilot requires explicit acknowledgement");
@@ -27,6 +28,7 @@ export async function updateSettings(formData: FormData) {
       founder_id: founder.id,
       mode,
       autopilot_enabled: mode === "autopilot",
+      max_autopilot_per_day: maxPerDay,
       focus_topics: focusTopics,
       content_goals: contentGoals,
       prohibited_topics: prohibitedTopics,

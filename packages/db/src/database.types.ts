@@ -327,6 +327,45 @@ export type Database = {
           },
         ]
       }
+      daily_tweet_pool: {
+        Row: {
+          author_username: string
+          content: string
+          created_at: string
+          harvested_date: string
+          id: string
+          like_count: number
+          reply_count: number
+          retweet_count: number
+          topic_bucket: string
+          tweet_id: string
+        }
+        Insert: {
+          author_username: string
+          content: string
+          created_at?: string
+          harvested_date?: string
+          id?: string
+          like_count?: number
+          reply_count?: number
+          retweet_count?: number
+          topic_bucket: string
+          tweet_id: string
+        }
+        Update: {
+          author_username?: string
+          content?: string
+          created_at?: string
+          harvested_date?: string
+          id?: string
+          like_count?: number
+          reply_count?: number
+          retweet_count?: number
+          topic_bucket?: string
+          tweet_id?: string
+        }
+        Relationships: []
+      }
       event_consumers: {
         Row: {
           consumer: string
@@ -1300,6 +1339,32 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "subscriptions_founder_id_fkey"
+            columns: ["founder_id"]
+            isOneToOne: false
+            referencedRelation: "founders"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tweet_claims: {
+        Row: {
+          claimed_date: string
+          founder_id: string
+          tweet_id: string
+        }
+        Insert: {
+          claimed_date?: string
+          founder_id: string
+          tweet_id: string
+        }
+        Update: {
+          claimed_date?: string
+          founder_id?: string
+          tweet_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tweet_claims_founder_id_fkey"
             columns: ["founder_id"]
             isOneToOne: false
             referencedRelation: "founders"

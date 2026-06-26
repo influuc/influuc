@@ -38,7 +38,7 @@ export default async function XSchedulePage() {
 
   const { data: posts } = await db
     .from("weekly_posts")
-    .select("id, content, post_type, status, sort_order, scheduled_date, source_tweet_id, source_tweet_content, source_tweet_author")
+    .select("id, content, post_type, status, sort_order, scheduled_date")
     .eq("founder_id", founder.id)
     .eq("strategy_id", strategy.id)
     .eq("platform", "x")

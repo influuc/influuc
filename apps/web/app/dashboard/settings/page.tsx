@@ -22,7 +22,7 @@ export default async function SettingsPage() {
   const db = createServiceClient();
   const [{ data: prefs }, { data: connections }] = await Promise.all([
     db.from("operating_preferences")
-      .select("mode, focus_topics, content_goals, tone, prohibited_topics, extra_notes")
+      .select("mode, focus_topics, content_goals, tone, prohibited_topics, extra_notes, max_autopilot_per_day")
       .eq("founder_id", founder.id)
       .single(),
     db.from("platform_connections")
@@ -57,6 +57,7 @@ export default async function SettingsPage() {
         initialTone={prefs?.tone ?? "direct"}
         initialProhibitedTopics={prefs?.prohibited_topics ?? []}
         initialExtraNotes={prefs?.extra_notes ?? ""}
+        initialMaxPerDay={prefs?.max_autopilot_per_day ?? 3}
       />
 
       {/* Divider */}
