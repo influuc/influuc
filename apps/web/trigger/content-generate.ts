@@ -124,20 +124,7 @@ export const contentGenerate = task({
 
     logger.info("content.generate starting", { founderId, weekStart });
 
-    // ── 1. Load brain facts ──────────────────────────────────────────────────
-    const { data: facts } = await db
-      .from("brain_facts")
-      .select("layer, key, content, confidence")
-      .eq("founder_id", founderId)
-      .eq("status", "active")
-      .order("confidence", { ascending: false })
-      .limit(60);
-
-    const brainText = (facts ?? [])
-      .map((f) => `[${f.layer}] ${f.key}: ${f.content}`)
-      .join("\n");
-
-    // ── 2. Load preferences ──────────────────────────────────────────────────
+    // ── 1. Load preferences (needed to build the retrieval query) ────────────
     const { data: prefs } = await db
       .from("operating_preferences")
       .select("focus_topics, content_goals, tone, prohibited_topics, extra_notes")
@@ -146,6 +133,46 @@ export const contentGenerate = task({
 
     const focusTopics     = prefs?.focus_topics?.join(", ")     ?? "general founder/business topics";
     const contentGoals    = prefs?.content_goals?.join(", ")    ?? "build authority";
+
+    // ── 2. Retrieve brain facts (SCRUM-23) ───────────────────────────────────
+    //    Semantic retrieval when embeddings + an embedding key exist; otherwise
+    //    confidence x salience ranking. Both beat raw "top N by confidence".
+    let facts: { layer: string; key: string | null; content: string }[] | null = null;
+
+    if (process.env.OPENAI_API_KEY) {
+      try {
+        const queryText = `${focusTopics}. Goals: ${contentGoals}`;
+        const eRes = await fetch("https://api.openai.com/v1/embeddings", {
+          method: "POST",
+          headers: { Authorization: `Bearer ${process.env.OPENAI_API_KEY}`, "Content-Type": "application/json" },
+          body: JSON.stringify({ model: "text-embedding-3-small", input: queryText }),
+        });
+        if (eRes.ok) {
+          const ej = await eRes.json() as { data: { embedding: number[] }[] };
+          const vec = ej.data[0]?.embedding;
+          if (vec) {
+            const { data: matched } = await db.rpc("match_brain_facts", {
+              p_founder: founderId,
+              p_embedding: JSON.stringify(vec) as unknown as string,
+              p_limit: 50,
+            });
+            if (matched?.length) facts = matched;
+          }
+        }
+      } catch (err) {
+        logger.warn("content.generate: semantic retrieval failed, falling back", { err: String(err) });
+      }
+    }
+
+    if (!facts) {
+      const { data: ranked } = await db.rpc("rank_brain_facts", { p_founder: founderId, p_limit: 60 });
+      facts = ranked ?? [];
+    }
+
+    const brainText = (facts ?? [])
+      .map((f) => `[${f.layer}] ${f.key ?? "fact"}: ${f.content}`)
+      .join("\n");
+
     const tone            = prefs?.tone                          ?? "direct";
     const prohibitedRaw   = prefs?.prohibited_topics ?? [];
     const prohibited      = prohibitedRaw.length ? prohibitedRaw.join(", ") : "none";

@@ -1621,6 +1621,14 @@ export type Database = {
     }
     Functions: {
       current_founder_id: { Args: never; Returns: string }
+      rank_brain_facts: {
+        Args: { p_founder: string; p_limit?: number }
+        Returns: { layer: string; key: string | null; content: string; confidence: number; score: number }[]
+      }
+      match_brain_facts: {
+        Args: { p_founder: string; p_embedding: string; p_limit?: number }
+        Returns: { layer: string; key: string | null; content: string; confidence: number; similarity: number }[]
+      }
       vault_create_secret: {
         Args: { p_name?: string; p_secret: string }
         Returns: string
